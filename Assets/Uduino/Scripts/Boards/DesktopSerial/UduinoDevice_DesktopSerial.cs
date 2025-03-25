@@ -155,7 +155,11 @@ namespace Uduino {
                             errorsTries++;
                             if(errorsTries > 5)
                             {
-                                Debug.Log("Todo : Reconnect automatically ? ");
+                                errorsTries = 0;
+                                UduinoManager.Instance.InvokeAsync(() =>
+                                {
+                                    UduinoManager.Instance.CloseDevice(this);
+                                });
                             }
                         }
                         return false;
@@ -204,41 +208,49 @@ namespace Uduino {
                 try
                 {
                     int lineCount = 0;
-                    while (lineCount < 5)
-                    {
-                        string readedLine = serial.ReadLine();
-                        MessageReceived(readedLine);
-                        lineCount++;
-                    }
-                    if (lineCount > 5)
-                    {
-                        serial.DiscardOutBuffer();
-                        serial.DiscardInBuffer();
-                    }
-                    return true;
-                    /*
-                    int lineCount = 0;
                     string tempBuffer = "";
-                    for (int i=0; i <150;i++)
+
+                    if (!UduinoManager.Instance.readLineCharByChar)
                     {
-                        char a = (char)serial.ReadByte();
-                        tempBuffer += a.ToString();
-                        if (tempBuffer.EndsWith("\r\n"))
+                        // Wait /r /n for new line
+                        while (lineCount < 5)
                         {
-                            string readedLine = tempBuffer.TrimEnd(Environment.NewLine.ToCharArray());
+                            string readedLine = serial.ReadLine();
                             MessageReceived(readedLine);
-                            tempBuffer = "";
                             lineCount++;
-                            if (lineCount > 5)
+                        }
+                        if (lineCount > 5)
+                        {
+                            serial.DiscardOutBuffer();
+                            serial.DiscardInBuffer();
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        // Read char by char
+                        for (int i = 0; i < 500; i++)
+                        {
+                            char a = (char)serial.ReadByte();
+                            tempBuffer += a.ToString();
+                            //Debug.Log(a);
+                            if (tempBuffer.EndsWith("\r\n"))
                             {
-                                serial.DiscardOutBuffer();
-                                serial.DiscardInBuffer();
-                                return true;
+                                string readedLine = tempBuffer.TrimEnd(Environment.NewLine.ToCharArray());
+                                MessageReceived(readedLine);
+                                tempBuffer = "";
+                                lineCount++;
+                                if (lineCount > 5)
+                                {
+                                    serial.DiscardOutBuffer();
+                                    serial.DiscardInBuffer();
+                                    return true;
+                                }
                             }
                         }
+
+                        return true;
                     }
-                    
-                    return true;*/
                 }
                 catch (TimeoutException e)
                 {
@@ -279,9 +291,8 @@ namespace Uduino {
             if (serial != null && serial.IsOpen)
             {
                 Log.Warning("Closing port : <color=#2196F3>[" + _port + "]</color>");
-                serial.Close();
+                System.Threading.Thread.Sleep(30);
                 serial.Dispose();
-                boardStatus = BoardStatus.Closed;
                 serial = null;
             }
         }
@@ -289,3 +300,4 @@ namespace Uduino {
 #endif
     }
 }
+ 

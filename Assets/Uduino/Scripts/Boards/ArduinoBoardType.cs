@@ -134,8 +134,8 @@ namespace Uduino
             boardTypes.Add(new ArduinoBoardType("NodeMCU", new Dictionary<string, int>() { { "D0", 16 }, { "D1", 5 }, { "D2", 4 }, { "D3", 0 }, { "D4", 2 }, { "D5", 14 }, { "D6", 12 }, { "D7", 13 }, { "D8", 15 }, { "RX", 3 }, { "TX", 1 }, { "S2", 9 }, { "S3", 10 }, { "A0", 17 } }));
             boardTypes.Add(new ArduinoBoardType("LoLin", GetBoardFromName("NodeMCU").pins));
             boardTypes.Add(new ArduinoBoardType("WeMos", new Dictionary<string, int>() { { "D0", 16 }, { "D1", 5 }, { "D2", 4 }, { "D3", 0 }, { "D4", 2 }, { "D5", 14 }, { "D6", 12 }, { "D7", 13 }, { "D8", 15 }, { "A0", 17 } }));
-            boardTypes.Add(new ArduinoBoardType("Generic esp8266", new Dictionary<string, int>() { { "D0", 16 }, { "D1", 5 }, { "D2", 4 }, { "D3", 0 }, { "D4", 2 }, { "D5", 14 }, { "D6", 12 }, { "D7", 13 }, { "D8", 15 }, { "RX", 3 }, { "TX", 1 }, { "S2", 9 }, { "S3", 10 }, { "A0", 17 } }));
-
+            boardTypes.Add(new ArduinoBoardType("Generic ESP8266", new Dictionary<string, int>() { { "D0", 16 }, { "D1", 5 }, { "D2", 4 }, { "D3", 0 }, { "D4", 2 }, { "D5", 14 }, { "D6", 12 }, { "D7", 13 }, { "D8", 15 }, { "RX", 3 }, { "TX", 1 }, { "S2", 9 }, { "S3", 10 }, { "A0", 17 } }));
+            boardTypes.Add(new ArduinoBoardType("Generic ESP32", new Dictionary<string, int>() { {"D1",1},{"D2",2},{"D3",3},{"D4",4},{"D5",5},{"D6",6},{"D7",7},{"D8",8},{"D9",9},{"D10",10},{"D11",11},{"D12",12},{"D13",13},{"D14",14},{"D15",15},{"D16",16},{"D17",17},{"D18",18},{"D19",19},{"D20",20},{"D21",21},{"D22",22},{"D23",23},{"D24",24},{"D25",25},{"D26",26},{"D27",27},{"D28",28},{"D29",29},{"D30",30},{"D31",31},{"D32",32},{"D33",33},{"D34",34},{"D35",35},{"D36",36},{"D37",37},{"D38",38},{"D39",39},{"A0",36},{"A3",39},{"A4",32},{"A5",33},{"A6",34},{"A7",35},{"A10", 4},{"A11", 0},{"A12", 2},{"A13",15},{"A14",13},{"A15",12},{"A16",14},{"A17",27},{"A18",25},{"A19",26}}));
             //   boardTypes.Add(new ArduinoBoardType("Arduino Yun", 13, 6, new int[] {4,6,7,8,9,10,12}));
         }
 
@@ -173,13 +173,39 @@ namespace Uduino
         /// Return the arduino board ID from a name
         /// </summary>
         /// <param name="name">Name of the board</param>
-        /// <returns>Aarduino board index in List</returns>
+        /// <returns>Arduino board index in List</returns>
         public int GetBoardIdFromName(string name)
         {
             ArduinoBoardType board = boardTypes.Find(x => x.name == name);
             return boardTypes.IndexOf(board);
         }
 
+        /// <summary>
+        /// Return the arduino board  name
+        /// </summary>
+        /// <param boardId="boardId">Id of the board</param>
+        /// <returns>Board name</returns>
+        public string GetBoardName(int boardId)
+        {
+            return boardTypes[boardId].name;
+        }
+
+        /// <summary>
+        /// Check if a board is Wifi
+        /// </summary>
+        /// <param boardId="boardId">Id of the board</param>
+        /// <returns>Board is Wifi</returns>
+        public bool IsWifiBoard(int boardId)
+        {
+            string boardName = boardTypes[boardId].name;
+            return (
+                boardName == "NodeMCU" ||
+                boardName == "LoLin" ||
+                boardName == "WeMos" ||
+                boardName == "Generic ESP8266" ||
+                boardName == "Generic ESP32"
+            );
+        }
 
         /// <summary>
         /// Add a new board type

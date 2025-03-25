@@ -123,10 +123,12 @@ namespace Uduino
                     return _instance;
 
                 UduinoManager[] uduinoManagers = FindObjectsOfType(typeof(UduinoManager)) as UduinoManager[];
+
+
                 if (uduinoManagers.Length == 0 )
                 {
                     Log.Warning("UduinoManager not present on the scene. Creating a new one.");
-                    UduinoManager manager = new GameObject("UduinoManager").AddComponent<UduinoManager>();
+                    UduinoManager manager = new GameObject("Uduino").AddComponent<UduinoManager>();
                     _instance = manager;
                     return _instance;
                 }
@@ -192,7 +194,7 @@ namespace Uduino
         /// <summary>
         /// Uduino BoardConnection type, when a plugin is used
         /// </summary>
-        UduinoConnection boardConnection = null;
+        public UduinoConnection boardConnection = null;
 
         /// <summary>
         /// State of the Uduino Manager
@@ -287,7 +289,7 @@ namespace Uduino
 
         public int writeTimeout = 30;
 
-        public int threadFrequency = 16; //16 for 60fps
+        public int threadIdleDelay = 16; //16 for 60fps
 
         public bool alwaysRead = true;
 
@@ -307,11 +309,11 @@ namespace Uduino
         /// SendRateSpeed
         /// </summary>
         [SerializeField]
-        private int sendRateSpeed = 20;
-        public int SendRateSpeed
+        private int sendRateDelay = 20;
+        public int SendRateDelay
         {
-            get { return sendRateSpeed; }
-            set { sendRateSpeed = value; }
+            get { return sendRateDelay; }
+            set { sendRateDelay = value; }
         }
 
         /// <summary>
@@ -344,6 +346,11 @@ namespace Uduino
         /// Delemiter between each bundle
         /// </summary>
         public static string bundleDelimiter = "-";
+
+        /// <summary>
+        /// Read line by character
+        /// </summary>
+        public bool readLineCharByChar = false;
 
         /// <summary>
         /// Stop all digital/analog pin on quit
@@ -482,7 +489,10 @@ namespace Uduino
         {
             if (delay == -1) delay = delayBeforeDiscover;
             yield return new WaitForSeconds(delay);
-            DiscoverPorts();
+            if (uduinoDevices.Count == 0)
+            {
+                DiscoverPorts();
+            }
             if(autoReconnect)
              StartCoroutine("RestartIfBoardNotDetected");
         }
@@ -651,7 +661,7 @@ namespace Uduino
                 return device;
             } else
             {
-                Log.Error("No board with the name " + name + " is found in the board list.");
+                Log.Warning("No board with the name " + name + " is found in the board list.");
                 return null;
             }
         }
@@ -864,10 +874,15 @@ namespace Uduino
                 Pin newPin = new Pin(target, pin, mode);
                 pins.Add(newPin);
                 string arduinoTarget = target != null ? " on the arduino <color=#ff3355>" + target.name + "</color> " : " ";
-                Log.Debug("Set pinMode of <color=#4CAF50>" + pin +"</color>" +  arduinoTarget + "to <color=#2e7d32>" + mode + "</color>");
                 if ((target == null && uduinoDevices.Count != 0) || //if target is not set but at least one card is connected
                    (target != null && UduinoTargetExists(target)))
+                {
+                    Log.Debug("Set pinMode of <color=#4CAF50>" + pin + "</color>" + arduinoTarget + "to <color=#2e7d32>" + mode + "</color>");
                     newPin.Init();
+                } else
+                {
+                    Log.Debug("Added to queue PinMode of <color=#4CAF50>" + pin + "</color>" + arduinoTarget + "to <color=#2e7d32>" + mode + "</color>");
+                }
             }
         }
         /// <summary>
@@ -1299,7 +1314,14 @@ namespace Uduino
         /// <param name="value">Optional value</param>
         public void sendCommand(UduinoDevice target, string command, params object[] value)
         {
-            target.WriteToArduino(command, BuildMessageParameters(value));
+            if(target == null)
+            {
+                foreach (KeyValuePair<string, UduinoDevice> uduino in uduinoDevices)
+                    uduino.Value.WriteToArduino(command, BuildMessageParameters(value));
+            } else
+            {
+                target.WriteToArduino(command, BuildMessageParameters(value));
+            }
         }
 
         [System.Obsolete("UduinoManager.Write() is deprecated, please use sendCommand() instead.")]
@@ -1375,7 +1397,9 @@ namespace Uduino
             UduinoDevice[] devices;
             if (GetBoard(target, out devices))
                 foreach (UduinoDevice device in devices)
+                {
                     device.SendBundle(bundleName);
+                }
         }
 
         /// <summary>
@@ -1398,7 +1422,7 @@ namespace Uduino
                 if (!LimitSendRate)
                     yield return null;
 
-                yield return new WaitForSeconds(sendRateSpeed / 1000.0f);
+                yield return new WaitForSeconds(sendRateDelay / 1000.0f);
                 List<string> keys = new List<string>(uduinoDevices.Keys);
                 foreach (string key in keys)
                     uduinoDevices[key].SendAllBundles();
@@ -1429,6 +1453,15 @@ namespace Uduino
 
             return isPresent && isActive;
         }
+
+
+        public bool ExtensionIsPresent(string extensionName)
+        {
+            bool isPresent = false;
+            presentExtentionsMap.TryGetValue(extensionName, out isPresent);
+            return isPresent;
+        }
+
         #endregion
 
         #region Hardware reading
@@ -1521,11 +1554,11 @@ namespace Uduino
                 StartThread(true);
             }
 
-            if(autoReconnect && shouldReconnect)
+            if(!ExtensionIsPresentAndActive("UduinoDevice_DesktopBluetoothLE") && autoReconnect && shouldReconnect)
             {
-                StartCoroutine("DiscoverWithDelay", 5.0f);
+                StartCoroutine("DiscoverWithDelay", autoReconnectDelay);
                 shouldReconnect = false;
-                Log.Warning("No Board detected. Reconnecting.");
+                Log.Warning("No Board detected. Reconnecting in " + autoReconnectDelay  + " seconds.");
             }
         }
 
@@ -1548,8 +1581,8 @@ namespace Uduino
                         uduino.Value.ReadFromArduinoLoop();
                     }
                 }
-                Thread.Sleep(threadFrequency);
-                if (limitSendRate) Thread.Sleep((int)sendRateSpeed / 2);
+                Thread.Sleep(threadIdleDelay);
+                if (limitSendRate) Thread.Sleep((int)sendRateDelay / 2);
             }
             _thread = null;
         }
@@ -1592,9 +1625,9 @@ namespace Uduino
                 }
 
                 if (limitSendRate)
-                    yield return new WaitForSeconds(sendRateSpeed / 1000.0f);
+                    yield return new WaitForSeconds(sendRateDelay / 1000.0f);
                 else
-                    yield return new WaitForSeconds(threadFrequency/1000.0f);
+                    yield return new WaitForSeconds(threadIdleDelay/1000.0f);
             }
         }
 
@@ -1699,7 +1732,10 @@ namespace Uduino
                     ManagerState = UduinoManagerState.Idle;
 
                 if (!isApplicationQuiting && uduinoDevices.Count == 0)
+                {
                     StopThread();
+                    if (autoReconnect) shouldReconnect = true;
+                }
             }
             catch (Exception e)
             {
@@ -1762,9 +1798,9 @@ namespace Uduino
     public static class UduinoVersion
     {
         static int major = 3;
-        static int minor = 1;
-        static int patch = 2;
-        static string update = "May 2020";
+        static int minor = 5;
+        static int patch = 0;
+        static string update = "Feb 2022";
 
         public static string getVersion()
         {

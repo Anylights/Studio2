@@ -56,7 +56,7 @@ namespace Uduino
                     string[] cu = System.IO.Directory.GetFiles("/dev/", "cu.*");
                     foreach (string dev in cu)
                     {
-                        if (dev.StartsWith("/dev/cu.usb") || dev.StartsWith("/dev/cu.wchusb"))
+                        if (dev.StartsWith("/dev/cu.usb") || dev.StartsWith("/dev/cu.wchusb") || dev.StartsWith("/dev/cu.SLAB") )
                         {
                             serial_ports.Add(dev);
                         }

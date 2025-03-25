@@ -18,25 +18,60 @@ namespace Uduino
             if (manager.activeExtentionsMap.ContainsValue(true))
             {
                 if (manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopBluetoothLE"))
+                {
+                #if UDUINO_DESKTOP_BLE
                     connection = System.Reflection.Assembly.GetExecutingAssembly().CreateInstance("Uduino.UduinoConnection_DesktopBluetoothLE") as UduinoConnection;
+                #endif
+                }
                 else if (manager.ExtensionIsPresentAndActive("UduinoDevice_Wifi"))
+                {
+                #if UDUINO_WIFI
                     connection = System.Reflection.Assembly.GetExecutingAssembly().CreateInstance("Uduino.UduinoConnection_Wifi") as UduinoConnection;
+                #endif
+                }
                 else
                     connection = new UduinoConnection_DesktopSerial();
             } else
             {
+                #if UNITY_EDITOR
+                Log.Warning("No Uduino plugin selected");
+                return null;
+                #else
                 return connection = new UduinoConnection_DesktopSerial(); // Fix for Build
+#endif            
             }
 
 #elif UNITY_ANDROID //Get the  Android Serial Plugin
             if(manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidBluetoothLE")) {
+            #if UDUINO_ANDROID_BLE
               connection = new UduinoConnection_AndroidBluetoothLE();
+        #endif
             } else if(manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidSerial")){
+        #if UDUINO_ANDROID_SERIAL
               connection = new UduinoConnection_AndroidSerial();
+            #endif
             } else if (manager.ExtensionIsPresentAndActive("UduinoDevice_Wifi"))
+             {
+         #if UDUINO_WIFI
               connection = new UduinoConnection_Wifi();
-            else { Log.Error("Uduino for Android is not active ! Activate it in the Inspector Panel.");  }
-#endif
+        #endif
+            }
+            else {
+                Log.Error("Uduino for Android is not active ! Activate it in the Inspector Panel.");
+            }
+
+#elif UNITY_IOS
+        if (manager.ExtensionIsPresentAndActive("UduinoDevice_Wifi"))
+             {
+         #if UDUINO_WIFI
+              connection = new UduinoConnection_Wifi();
+        #endif
+            }
+            else {
+                Log.Error("Uduino Wifi is not active ! Activate it in the Inspector Panel.");
+            }
+ #endif
+
             Log.Debug("Starting Uduino with type: " + connection.GetType());
 
             return connection;
@@ -96,7 +131,7 @@ namespace Uduino
 #endif
             uduinoDevice.boardStatus = BoardStatus.Finding;
             int tries = 0;
-            Thread.Sleep(Mathf.FloorToInt(UduinoManager.Instance.delayBeforeDiscover* 1000));
+            Thread.Sleep(Mathf.FloorToInt(_manager.delayBeforeDiscover* 1000));
             do
             {
                 if (TryToFind(uduinoDevice, true))
@@ -118,7 +153,7 @@ namespace Uduino
         {
             uduinoDevice.boardStatus = BoardStatus.Finding;
             int tries = 0;
-            yield return new WaitForSeconds(UduinoManager.Instance.delayBeforeDiscover);
+            yield return new WaitForSeconds(_manager.delayBeforeDiscover);
             do
             {
                 if (TryToFind(uduinoDevice))
@@ -194,7 +229,7 @@ namespace Uduino
         {
             if (connectedDevice != null)
             {
-                UduinoManager.Instance.CloseDevice(connectedDevice);
+                _manager.CloseDevice(connectedDevice);
                 connectedDevice = null;
             }
         }

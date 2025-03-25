@@ -29,7 +29,7 @@ namespace Uduino
             ChangePinMode(mode);
         }
 
-            public override int SendRead(string bundle = null, System.Action<string> action = null, bool digital = false)
+        public override int SendRead(string bundle = null, System.Action<string> action = null, bool digital = false)
         {
             int readVal = 1;
             if (editorManager != null)
@@ -97,12 +97,14 @@ namespace Uduino
     }
     #endregion
 
+#endif
+
     [CustomEditor(typeof(UduinoManager))]
     public class UduinoManagerEditor : Editor
     {
         public static UduinoManagerEditor Instance { get; private set; }
 
-        #region Variables
+#if UDUINO_READY
         private UduinoManager manager = null;
         public UduinoManager Manager
         {
@@ -116,23 +118,22 @@ namespace Uduino
                 manager = value;
             }
         }
-        string message = "";
-        string messageValue = "";
-        // string newBlackListedPort = "";
-        string checkVersion = "";
 
-        LogLevel debugLevel;
-
-        static bool defaultPanel = true;
         static bool arduinoPanel = true;
         static bool eventsPanel = true;
 
         static bool advancedPanel = false;
         static bool blacklistedFoldout = false;
 
-        //Style-relatedx
+#endif // end UDUINO_READY
+
+
+        // TODO : static ? 
+        static bool defaultPanel = true;
+
+
+        #region Style Variables
         Color headerColor = new Color(0.65f, 0.65f, 0.65f, 1);
-        //Color backgroundColor = new Color(0.75f, 0.75f, 0.75f);
         Color defaultButtonColor;
 
         GUIStyle boldtext = null;
@@ -140,6 +141,15 @@ namespace Uduino
         GUIStyle olInput = null;
         GUIStyle customFoldtout = null;
         GUIStyle colTitleCenter = null;
+        #endregion
+
+#if UDUINO_READY
+        string message = "";
+        string messageValue = "";
+        // string newBlackListedPort = "";
+        string checkVersion = "";
+
+        LogLevel debugLevel;
 
         bool isUpToDate = false;
         bool isUpToDateChecked = false;
@@ -155,10 +165,12 @@ namespace Uduino
         private ReorderableList blackListedList = null;
         private ReorderableList wifiBoardsList = null;
         private Dictionary<string, ReorderableList> boardLists = new Dictionary<string, ReorderableList>();
-        
+
         List<Pin> lastActivePinList = new List<Pin>();
         UduinoDevice lastClickedDevice = null; // Dirty hack when there are multiple boards
 
+
+        #region Lists setup
         void EnableLists()
         {
             blackListedList = new ReorderableList(Manager.BlackListedPorts, typeof(string), true, true, true, true);
@@ -191,14 +203,14 @@ namespace Uduino
                 blackListedList.onAddCallback -= AddBlackListedPortItem;
                 blackListedList.onRemoveCallback -= RemoveBlackListedPortItem;
             }
-            if(wifiBoardsList != null)
+            if (wifiBoardsList != null)
             {
                 wifiBoardsList.drawHeaderCallback -= DrawWifiBoardsHeader;
                 wifiBoardsList.drawElementCallback -= DrawWifiBoardsElement;
                 wifiBoardsList.onAddCallback -= AddWifiBoardsItem;
                 wifiBoardsList.onRemoveCallback -= RemoveWifiBoardsItem;
             }
-            foreach(KeyValuePair<string, ReorderableList> list in boardLists)
+            foreach (KeyValuePair<string, ReorderableList> list in boardLists)
             {
                 list.Value.drawHeaderCallback -= DrawEditorPinHeader;
                 list.Value.drawElementCallback -= DrawEditorPinElement;
@@ -206,17 +218,19 @@ namespace Uduino
                 list.Value.onRemoveCallback -= RemoveEditorPinItem;
             }
         }
+        #endregion
 
         #region Black listed list
         private void DrawBlackListedHeader(Rect rect) {
             //GUI.Label(new Rect(rect.x, rect.y, rect.width, rect.height), "Serial port name");
             EditorGUI.LabelField(rect, "Serial port name");
+
         }
         private void DrawBlackListedElement(Rect rect, int index, bool active, bool focused) {
             string item = Manager.BlackListedPorts[index];
             EditorGUI.BeginChangeCheck();
             //  GUI.Label(new Rect(rect.x + 118, rect.y, 30, 22), "", "ProfilerTimelineFoldout");
-            item = GUI.TextField(new Rect(rect.x, rect.y +1, rect.width, 18), item);
+            item = GUI.TextField(new Rect(rect.x, rect.y + 1, rect.width, 18), item);
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -225,7 +239,16 @@ namespace Uduino
             Manager.BlackListedPorts[index] = item;
         }
         private void AddBlackListedPortItem(ReorderableList list) {
-            Manager.BlackListedPorts.Add("Serial port name");
+
+#if UNITY_EDITOR_WIN
+            Manager.BlackListedPorts.Add("COM3");
+#elif UNITY_EDITOR_OSX
+            Manager.BlackListedPorts.Add("dev/tty.usb");
+#elif UNITY_EDITOR_LINUX
+            Manager.BlackListedPorts.Add("dev/tty.usb");
+#else 
+             Manager.BlackListedPorts.Add("Serial Port Name");
+#endif
             EditorUtility.SetDirty(target);
         }
         private void RemoveBlackListedPortItem(ReorderableList list) {
@@ -243,19 +266,19 @@ namespace Uduino
         private void DrawWifiBoardsHeader(Rect rect)
         {
             //GUI.Label(new Rect(rect.x, rect.y, rect.width, rect.height), "Serial port name");
-            EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width/2, rect.height), "IP Address");
+            EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width / 2, rect.height), "IP Address");
             GUILayout.FlexibleSpace();
-            EditorGUI.LabelField(new Rect(rect.x+(rect.width/2), rect.y, rect.width/2, rect.height), "Port");
+            EditorGUI.LabelField(new Rect(rect.x + (rect.width / 2), rect.y, rect.width / 2, rect.height), "Port");
         }
         private void DrawWifiBoardsElement(Rect rect, int index, bool active, bool focused)
         {
-            
+
             UduinoWiFiSettings item = Manager.UduinoWiFiBoards[index];
             EditorGUI.BeginChangeCheck();
             //  GUI.Label(new Rect(rect.x + 118, rect.y, 30, 22), "", "ProfilerTimelineFoldout");
-             item.ip = GUI.TextField(new Rect(rect.x, rect.y + 1, rect.width/2 -4, 18), item.ip);
+            item.ip = GUI.TextField(new Rect(rect.x, rect.y + 1, rect.width / 2 - 4, 18), item.ip);
             string tmpPort = GUI.TextField(new Rect(rect.x + (rect.width / 2) + 4, rect.y + 1, rect.width / 2 - 4, 18), item.port.ToString());
-            try { item.port = Convert.ToInt32(tmpPort); } catch(Exception e) {  Log.Warning("Connection Port must be an Integer! " + e); }
+            try { item.port = Convert.ToInt32(tmpPort); } catch (Exception e) { Log.Warning("Connection Port must be an Integer! " + e); }
 
             if (EditorGUI.EndChangeCheck())
             {
@@ -267,7 +290,7 @@ namespace Uduino
         {
             UduinoWiFiSettings u = new UduinoWiFiSettings();
             u.ip = "192.168.x.x";
-            u.port = 4222+ Manager.UduinoWiFiBoards.Count;
+            u.port = 4222 + Manager.UduinoWiFiBoards.Count;
             Manager.UduinoWiFiBoards.Add(u);
             EditorUtility.SetDirty(target);
         }
@@ -281,6 +304,32 @@ namespace Uduino
             if (wifiBoardsList == null)
                 wifiBoardsList = new ReorderableList(Manager.UduinoWiFiBoards, typeof(UduinoWiFiSettings), true, true, true, true);
             wifiBoardsList.DoLayoutList();
+        }
+        void DrawWifiBoardsErrors()
+        {
+            if (!BoardsTypeList.Boards.IsWifiBoard(Manager.defaultArduinoBoardType))
+            {
+                EditorGUILayout.HelpBox("You are using Uduino Wifi but you selected " + BoardsTypeList.Boards.GetBoardName(Manager.defaultArduinoBoardType) + " as default Arduino board.", MessageType.Error);
+            }
+
+            if (Manager.UduinoWiFiBoards.Count > 1)
+            {
+                int port = -100;
+                foreach (UduinoWiFiSettings wifiSetting in Manager.UduinoWiFiBoards)
+                {
+                    foreach (UduinoWiFiSettings wifiSetting2 in Manager.UduinoWiFiBoards)
+                    {
+                        if (!wifiSetting2.Equals(wifiSetting) && wifiSetting.port == wifiSetting2.port)
+                        {
+                            port = wifiSetting.port;
+                        }
+                    }
+                }
+                if (port > 0)
+                {
+                    EditorGUILayout.HelpBox("You set two different boards with the same port ("+ port +"). Uduino will not detect multiple Wifi boards. To fix, use the function `uduino.setPort(" + (port+1) + ");` in your Arduino code in the `void setup()` function.", MessageType.Error);
+                }
+            }
         }
         #endregion
 
@@ -306,11 +355,11 @@ namespace Uduino
 
             for (int i = 0; i < Manager.pins.Count; ++i) {
                 Pin pin = Manager.pins[i];
-                if ((pin.device == board || pin.arduinoName == board.name || ( pin.device == null && pin.arduinoName == null) ) && pin.isEditorPin)
+                if ((pin.device == board || pin.arduinoName == board.name || (pin.device == null && pin.arduinoName == null)) && pin.isEditorPin)
                     lastActivePinList.Add(pin);
             }
 
-            
+
             list.list = lastActivePinList;
             list.DoLayoutList();
 
@@ -363,11 +412,11 @@ namespace Uduino
                     if (GUI.Button(new Rect(rect.x + leftOffset, rect.y + 2, width / 4, 16), "Read", "minibuttonLeft"))
                     {
                         // todo : si queue length == 0 refaire le call
-                       pin.SendRead(digital: pin.pinMode == PinMode.Input_pullup); //Force digital if it's input Pullup
-                       forceReRead = true;
+                        pin.SendRead(digital: pin.pinMode == PinMode.Input_pullup); //Force digital if it's input Pullup
+                        forceReRead = true;
                     }
                     UpdateReadPins(pin.device, pin.currentPin, pin.lastReadValue);
-                    
+
                     GUI.Label(new Rect(rect.x + leftOffset + width / 4, rect.y + 2, width / 4 * 3, 14), pin.lastReadValue.ToString(), "TextFieldDropDownText");
                     EditorUtility.SetDirty(target);
                     break;
@@ -413,7 +462,7 @@ namespace Uduino
                  }
              }*/
             EditorUtility.SetDirty(target);
-        }    
+        }
         #endregion
 
         private void OnDisable()
@@ -424,42 +473,41 @@ namespace Uduino
 
         #endregion
 
-        #endregion
-
-        void OnEnable()
-        {
-            if (manager == null)
-                manager = (UduinoManager)target;
-
-            FindExistingExtensions();
-            DisplayActivePlugins(true);
-            Instance = this;
-            EnableLists();
-            GetPanel();
-            manager.UpdateManagerState();
-            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
-        }
 
         public void OnBeforeAssemblyReload()
         {
-            if(!Application.isPlaying && Manager.uduinoDevices.Count != 0)
+            if (!Application.isPlaying && Manager.uduinoDevices.Count != 0)
             {
                 Log.Debug("Scripts are reloading while in editor mode. Disconnecting the connected boards");
                 Manager.CloseAllDevices();
             }
         }
 
-        #region Utils
-        public string FirstToLower(string s)
-        {
-            if (string.IsNullOrEmpty(s))
-                return string.Empty;
+#endif // end UDUINO_READY
 
-            char[] a = s.ToCharArray();
-            a[0] = char.ToLower(a[0]);
-            return new string(a);
+
+        void OnEnable()
+        {
+            Instance = this;
+
+#if UDUINO_READY
+            if (manager == null)
+                manager = (UduinoManager)target;
+
+            FindExistingExtensions();
+            DisplayActivePlugins(true);
+            EnableLists();
+            GetPanel();
+            manager.UpdateManagerState();
+            AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+#endif
+
+#if !UDUINO_READY
+            FindExistingExtensions();
+            UduinoManager t = (UduinoManager)target;
+            t.activeExtentionsMap["UduinoDevice_DesktopSerial"] = true;
+#endif
         }
-        #endregion
 
         #region Styles
         void SetColorAndStyles()
@@ -522,13 +570,21 @@ namespace Uduino
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace(); // Nededed for lastRect
             EditorGUILayout.EndHorizontal();
-        
-             // load textures
-            Texture tex = (Texture)EditorGUIUtility.Load("Assets/Uduino/Editor/Resources/uduino-logo.png");
-            Texture tex2 = (Texture)EditorGUIUtility.Load("Assets/Uduino/Editor/Resources/arduino-bg.png");
+
+            Texture tex = null;
+            Texture tex2 = null;
+            try
+            {
+                tex = (Texture)EditorGUIUtility.Load("Assets/Uduino/Editor/Resources/uduino-logo.png");
+                tex2 = (Texture)EditorGUIUtility.Load("Assets/Uduino/Editor/Resources/arduino-bg.png");
+
+            } catch (Exception e)
+            {
+                Log.Debug("Impossible to load the Logo");
+                Log.Debug(e);
+            }
             GUILayout.Space(0);
 
-            
             Color bgColor = new Color();
             ColorUtility.TryParseHtmlString("#ffffff", out bgColor);
 
@@ -539,20 +595,32 @@ namespace Uduino
             EditorGUI.DrawRect(new Rect(lastRect.x - 15, lastRect.y , Screen.width + 1, 70f), bgColor); // Fix for Unity 2018
 #else
             EditorGUI.DrawRect(new Rect(0, 0, Screen.width + 1, 70f), bgColor);
-#endif           
+#endif
             lastRect = GUILayoutUtility.GetLastRect();
             // draw text
             GUIStyle smallFont = new GUIStyle();
-           smallFont.fontSize = 8;
-           smallFont.alignment = TextAnchor.UpperRight;
-           EditorGUI.LabelField(new Rect(lastRect.x - 35, lastRect.y , Screen.width  , 60f), "v." +UduinoVersion.getVersion()+ " ", smallFont);
+            smallFont.fontSize = 8;
+            smallFont.alignment = TextAnchor.UpperRight;
+            EditorGUI.LabelField(new Rect(lastRect.x - 35, lastRect.y, Screen.width, 60f), "v." + UduinoVersion.getVersion() + " ", smallFont);
 
-           // draw Textures
-           GUI.DrawTexture(new Rect(Screen.width / 2 - tex.width / 2 -30 , lastRect.y -5, tex2.width, tex2.height), tex2, ScaleMode.ScaleToFit);
-           GUI.DrawTexture(new Rect(Screen.width / 2 - tex.width / 2, lastRect.y + 6, tex.width, tex.height), tex, ScaleMode.ScaleToFit);
+            if (tex != null)
+            {
+                // draw Textures
+                GUI.DrawTexture(new Rect(Screen.width / 2 - tex.width / 2 - 30, lastRect.y - 5, tex2.width, tex2.height), tex2, ScaleMode.ScaleToFit);
+                GUI.DrawTexture(new Rect(Screen.width / 2 - tex.width / 2, lastRect.y + 6, tex.width, tex.height), tex, ScaleMode.ScaleToFit);
+            } else
+            {
 
-           GUI.color = Color.white;
-          GUILayout.Space(60f);
+                Color fontColorUduino = new Color();
+                ColorUtility.TryParseHtmlString("#2eb3be", out fontColorUduino);
+                GUIStyle largeUduinoFont = new GUIStyle();
+                largeUduinoFont.normal.textColor = fontColorUduino;
+                largeUduinoFont.fontSize = 40;
+                largeUduinoFont.alignment = TextAnchor.MiddleCenter;
+                EditorGUI.LabelField(new Rect(0, 0, Screen.width + 1, 70f), "Uduino", largeUduinoFont);
+            }
+            GUI.color = Color.white;
+            GUILayout.Space(60f);
 
         }
 
@@ -571,15 +639,15 @@ namespace Uduino
             Rect lastRect = GUILayoutUtility.GetLastRect();
             GUI.Box(new Rect(0, lastRect.y + 4, Screen.width, 27), "");
             lastRect = GUILayoutUtility.GetLastRect();
-            EditorGUI.DrawRect(new Rect(lastRect.x - 15, lastRect.y + 5f, Screen.width, 25f), headerColor);
-            EditorGUI.DrawRect(new Rect(lastRect.x - 18, lastRect.y + 31f, Screen.width, 1), new Color(0.55f, 0.55f, 0.55f, 1));
-            EditorGUI.DrawRect(new Rect(lastRect.x -18 , lastRect.y +4f, Screen.width, 1), new Color(0.55f, 0.55f, 0.55f, 1));
+            EditorGUI.DrawRect(new Rect(lastRect.x - 18, lastRect.y + 5f, Screen.width, 25f), headerColor); // header BG
+            EditorGUI.DrawRect(new Rect(lastRect.x - 18, lastRect.y + 31f, Screen.width, 1), new Color(0.55f, 0.55f, 0.55f, 1)); // Line top
+            EditorGUI.DrawRect(new Rect(lastRect.x - 18, lastRect.y + 4f, Screen.width, 1), new Color(0.55f, 0.55f, 0.55f, 1)); // line bot
 
 
-#if UNITY_2018  || UNITY_5
+#if UNITY_2018 || UNITY_5
             GUI.Label(new Rect(lastRect.x, lastRect.y + 10, Screen.width, 25), title);
 #else
-          GUI.Label(new Rect(lastRect.x, lastRect.y + 5, Screen.width, 25), title);
+            GUI.Label(new Rect(lastRect.x, lastRect.y + 5, Screen.width, 25), title);
 #endif
 
             GUI.color = Color.clear;
@@ -592,137 +660,335 @@ namespace Uduino
             if (foldoutProperty) { GUILayout.Space(5); }
             return foldoutProperty;
         }
-#endregion
+        #endregion
 
-        #region CheckCompatibility and CheckUpdate
+        #region Utils & Compatiblity & Files Move
+        bool firstDone = false;
+        bool secondDone = false;
+
         public void CheckCompatibility()
         {
-#if UNITY_5_6 || UNITY_2017 || UNITY_2018 || UNITY_2019 || UNITY_2020 || UNITY_2021
-            if (PlayerSettings.GetApiCompatibilityLevel(BuildTargetGroup.Standalone) == ApiCompatibilityLevel.NET_2_0_Subset)
+            var target = EditorUserBuildSettings.activeBuildTarget;
+            var group = BuildPipeline.GetBuildTargetGroup(target);
+
+#if UNITY_2018_1_OR_NEWER
+            if (PlayerSettings.GetApiCompatibilityLevel(group) != ApiCompatibilityLevel.NET_4_6)
+#elif UNITY_5_6
+            if (PlayerSettings.GetApiCompatibilityLevel(group) == ApiCompatibilityLevel.NET_2_0_Subset)
 #else
-            if (PlayerSettings.apiCompatibilityLevel == ApiCompatibilityLevel.NET_2_0_Subset)
+        if (PlayerSettings.apiCompatibilityLevel == ApiCompatibilityLevel.NET_2_0_Subset)
 #endif
             {
                 SetGUIBackgroundColor("#ef5350");
-                EditorGUILayout.HelpBox("Uduino works only with .NET 2.0 (not Subset).", MessageType.Error, true);
+#if UNITY_2018_1_OR_NEWER
+                EditorGUILayout.HelpBox("Uduino works with .NET 4.x", MessageType.Error, true);
+#else
+            EditorGUILayout.HelpBox("Uduino works with .NET 2.0 (not Subset).", MessageType.Error, true);
+#endif
+                SetGUIBackgroundColor();
+
+                DrawLine(12, 0, 45);
+
+                SetGUIBackgroundColor("#4FC3F7");
                 if (GUILayout.Button("Fix Now", GUILayout.ExpandWidth(true)))
                 {
-#if UNITY_5_6 || UNITY_2017 || UNITY_2018 || UNITY_2019 || UNITY_2020 || UNITY_2021
-                    PlayerSettings.SetApiCompatibilityLevel(BuildTargetGroup.Standalone, ApiCompatibilityLevel.NET_2_0);
+#if UNITY_2018_1_OR_NEWER
+                    PlayerSettings.SetApiCompatibilityLevel(group, ApiCompatibilityLevel.NET_4_6);
+#elif UNITY_5_6
+                    PlayerSettings.SetApiCompatibilityLevel(group, ApiCompatibilityLevel.NET_2_0);
 #else
                     PlayerSettings.apiCompatibilityLevel = ApiCompatibilityLevel.NET_2_0;
 #endif
                     PlayerSettings.runInBackground = true;
-                    Debug.LogWarning("Reimporting all assets.");
-                    AssetDatabase.ImportAsset("Assets/Uduino/Scripts", ImportAssetOptions.ImportRecursive);
-                    AssetDatabase.Refresh();
                 }
                 SetGUIBackgroundColor();
             }
+            else
+            {
+                //   EditorGUILayout.HelpBox("Project settings is already set to .NET 2.0", MessageType.Info, true);
+                StepDone();
+                secondDone = true;
+            }
+            if(firstDone || secondDone) { }
         }
 
-        public void CheckCompatibilityErrors()
+
+        void StepDone()
         {
-            bool standalonebuildTarget = (
-#if UNITY_2018 || UNITY_2019 || UNITY_2020 || UNITY_2021
-                EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSX ||
-#else
-                EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSXUniversal ||
-                EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSXIntel64 ||
-#endif
-                EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows ||
-                EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows64 ||
-                EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneLinux64);
-
-
-            if (standalonebuildTarget && !Manager.ExtensionIsPresentAndActive("UduinoDevice_Wifi") &&
-                !Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopBluetoothLE") && !Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopSerial"))
-            {
-                EditorGUILayout.HelpBox("To build for desktop, select at least one connection type.", MessageType.Warning, true);
-            }
-            else if ((Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopBluetoothLE") ||
-                Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopSerial"))
-                && !standalonebuildTarget)
-            {
-                GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
-                EditorGUI.indentLevel--;
-                EditorGUILayout.HelpBox("Build target set for Android but Uduino desktop is selected.", MessageType.Warning, true);
-                if (GUILayout.Button("Switch build target to Standalone"))
-                {
-                    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows);
-                }
-                EditorGUI.indentLevel++;
-                GUILayout.EndVertical();
-            }
-
-            if (Manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidBluetoothLE") && Manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidSerial"))
-            {
-                EditorGUILayout.HelpBox("Having both Android BLE and Android Serial cause some conflits when building.", MessageType.Warning, true);
-            }
-
-            if (Manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidBluetoothLE") &&
-                PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel21 &&
-                PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevel23)
-            {
-                EditorGUI.indentLevel--;
-
-                GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
-                SetGUIBackgroundColor();
-                SetGUIBackgroundColor("#ef5350");
-                EditorGUILayout.HelpBox("Change the Arduino settings for Uduino BLE", MessageType.Error, true);
-                EditorGUI.indentLevel++;
-                GUILayout.BeginHorizontal();
-                SetGUIBackgroundColor("#4FC3F7");
-                if (PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel21 && GUILayout.Button("Min SDK Version: 21"))
-                {
-                    PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel21;
-                }
-                if (PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevel23 && GUILayout.Button("Target SDK Version: 23"))
-                {
-                    PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel23;
-                }
-                GUILayout.EndHorizontal();
-                GUILayout.EndVertical();
-
-                SetGUIBackgroundColor();
-            }
-
-            else if (Manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidSerial") &&
-               PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel19 &&
-               PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevel23)
-            {
-                EditorGUI.indentLevel--;
-
-                // GUILayout.BeginVertical("Box", GUILayout.ExpandWidth(true));
-                GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
-                SetGUIBackgroundColor();
-                SetGUIBackgroundColor("#ef5350");
-                EditorGUILayout.HelpBox("Change the Arduino settings for Uduino Android Serial", MessageType.Error, true);
-                EditorGUI.indentLevel++;
-                GUILayout.BeginHorizontal();
-                SetGUIBackgroundColor("#4FC3F7");
-                if (PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel19 && GUILayout.Button("Min SDK Version: 19"))
-                {
-                    PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel19;
-                }
-                if (PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevel23 && GUILayout.Button("Target SDK Version: 23"))
-                {
-                    PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel23;
-                }
-                GUILayout.EndHorizontal();
-                GUILayout.EndVertical();
-
-                SetGUIBackgroundColor();
-            }
-
-
+            SetGUIBackgroundColor("#00f908");
+            EditorGUILayout.HelpBox("Step done !", MessageType.Info, true);
+            SetGUIBackgroundColor();
         }
+
 
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            string destinationFolder = "~/Documents/Arduino/libraries";
+           string destinationFolder = "~/Documents/Arduino/libraries";
 #else
-        string destinationFolder = "C:/Users/" + Environment.UserName +"/Documents/Arduino/libraries";
+        string destinationFolder = "C:/Users/" + Environment.UserName + "/Documents/Arduino/libraries";
 #endif
+
+        void AddProjectDefine(string define)
+        {
+            //TODO : Fix if the build target is changed !
+            // Get defines.
+            BuildTargetGroup buildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+            string defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
+
+            // Append only if not defined already.
+            if (defines.Contains(define))
+            {
+                Debug.LogWarning("Selected build target (" + EditorUserBuildSettings.activeBuildTarget.ToString() + ") already contains <b>" + define + "</b> <i>Scripting Define Symbol</i>.");
+                Debug.LogWarning("If nothing is happening, please click on <i> Assets > Reimport all  </i> or restart Unity.");
+                return;
+            }
+            // Append.
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, (defines + ";" + define));
+            Debug.LogWarning("<b>" + define + "</b> added to <i>Scripting Define Symbols</i> for selected build target (" + EditorUserBuildSettings.activeBuildTarget.ToString() + ").");
+            RefreshAssetDatabase();
+            this.Repaint();
+        }
+
+        void RefreshAssetDatabase()
+        {
+            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+            AssetDatabase.Refresh();
+#if UNITY_2019_3_OR_NEWER
+            UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+#elif UNITY_2017_1_OR_NEWER
+            var editorAssembly = System.Reflection.Assembly.GetAssembly(typeof(Editor));
+            var editorCompilationInterfaceType = editorAssembly.GetType("UnityEditor.Scripting.ScriptCompilation.EditorCompilationInterface");
+            var dirtyAllScriptsMethod = editorCompilationInterfaceType.GetMethod("DirtyAllScripts", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+            dirtyAllScriptsMethod.Invoke(editorCompilationInterfaceType, null);
+#endif
+        }
+
+        void MoveArduinoFiles(string dest)
+        {
+            string sourceDirectory = Application.dataPath + "/Uduino/Arduino/libraries";
+            string destinationDirectory = FirstToLower(dest);
+            try
+            {
+                MoveDirectory(sourceDirectory, destinationDirectory);
+            }
+            catch(Exception e)
+            {
+                Debug.LogError("There has been an issue while trying to move the Arduino Library folders.");
+                Debug.LogError("Move the folder `Uduino/Arduino/libraries` to your Arduino libraries folder");
+                Debug.LogError(e);
+            }
+            AssetDatabase.Refresh();
+        }
+
+        public static void MoveDirectory(string source, string target)
+        {
+            var stack = new Stack<Folders>();
+            stack.Push(new Folders(source, target));
+
+            while (stack.Count > 0)
+            {
+                var folders = stack.Pop();
+                Directory.CreateDirectory(folders.Target);
+                foreach (var file in Directory.GetFiles(folders.Source, "*.*"))
+                {
+                    string targetFile = Path.Combine(folders.Target, Path.GetFileName(file));
+                    if (File.Exists(targetFile)) File.Delete(targetFile);
+                    if(Path.GetExtension(targetFile) != ".meta") File.Move(file, targetFile);
+                }
+
+                foreach (var folder in Directory.GetDirectories(folders.Source))
+                {
+                    stack.Push(new Folders(folder, Path.Combine(folders.Target, Path.GetFileName(folder))));
+                }
+            }
+            Directory.Delete(source, true);
+            FileUtil.DeleteFileOrDirectory("Assets/Uduino/Arduino");
+        }
+
+        public class Folders
+        {
+            public string Source { get; private set; }
+            public string Target { get; private set; }
+
+            public Folders(string source, string target)
+            {
+                Source = source;
+                Target = target;
+            }
+        }
+        public string FirstToLower(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return string.Empty;
+
+            char[] a = s.ToCharArray();
+            a[0] = char.ToLower(a[0]);
+            return new string(a);
+        }
+        #endregion
+
+
+#if !UDUINO_READY
+
+        bool moveError = false;
+
+        public void DrawOnInspectorGUI()
+        {
+            SetColorAndStyles();
+
+            DrawLogo();
+
+            DrawHeaderTitle("Uduino Setup", defaultPanel, headerColor);
+
+            //EditorGUILayout.HelpBox("Before getting started, you need to set-up Uduino.", MessageType.None);
+            //EditorGUILayout.Space();
+
+            DrawHeaderTitle("1. Add Uduino library in the Arduino folder", defaultPanel, headerColor);
+
+            if (!AssetDatabase.IsValidFolder("Assets/Uduino/Arduino/libraries"))
+            {
+                firstDone = true;
+                StepDone();
+            }
+
+            if (AssetDatabase.IsValidFolder("Assets/Uduino/Arduino/libraries"))
+            {
+
+                EditorGUILayout.HelpBox("To use Uduino you will need the dedicated Arduino library. Select the Arduino libraries folder to add Uduino library.", MessageType.None, true);
+
+            #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+                EditorGUILayout.HelpBox("The Arduino libraries folder is located under: ~/Documents/Arduino/libraries ", MessageType.Info, true);
+            #else
+                EditorGUILayout.HelpBox("The Arduino libraries folder is most likely located under: C:/Users/" + Environment.UserName + "/Documents/Arduino/libraries", MessageType.Info, true);
+            #endif
+
+                EditorGUILayout.LabelField("Select Arduino libraries Folder");
+
+                GUILayout.BeginHorizontal();
+
+                GUILayout.BeginVertical();
+                destinationFolder = EditorGUILayout.TextField(destinationFolder);
+                GUILayout.EndVertical();
+                GUILayout.BeginVertical();
+
+                if (GUILayout.Button("Select path", GUILayout.ExpandWidth(true)))
+                {
+                    GUI.FocusControl("");
+                    string path = EditorUtility.OpenFolderPanel("Set Arduino path", destinationFolder, "");
+                    if (path.Length != 0)
+                    {
+                        destinationFolder = path;
+                    }
+                }
+                GUILayout.EndVertical();
+
+                GUILayout.EndHorizontal();
+
+                if (moveError)
+                {
+                    EditorGUILayout.HelpBox("There has been an error while moving the Arduino files. The Uduino/Arduino/libraries folder seem empty. In case, add it to the 'Documents/Arduino/libraries' folder and click on \"Skip Setup\"", MessageType.Error, true);
+                }
+                DrawLine(12, 0, 45);
+                try
+                {
+
+                    SetGUIBackgroundColor("#4FC3F7");
+
+                    if (GUILayout.Button("Add Uduino library to Arduino", GUILayout.ExpandWidth(true)))
+                    {
+                        if (destinationFolder == "NOT SET")
+                        {
+                            if (EditorUtility.DisplayDialog("Move library folder", "You have to set a valid folder path", "Ok", "Cancel"))
+                            { }
+                        }
+                        else if (EditorUtility.DisplayDialog("Move library folder", "Are you sure the Arduino libraries folder is " + destinationFolder + " ?", "Move", "Cancel"))
+                        {
+                            MoveArduinoFiles(destinationFolder);
+                        }
+                    }
+                    SetGUIBackgroundColor();
+
+                } catch (Exception)
+                {
+                    moveError = true;
+                    Debug.LogError("There has been an error while moving the Arduino File. Please move it manually. ");
+                }
+            }
+
+
+
+            EditorGUILayout.Separator();
+
+            DrawHeaderTitle("2. Change project settings", defaultPanel, headerColor);
+            CheckCompatibility();
+
+            EditorGUILayout.Separator();
+            DrawHeaderTitle("3. (Optional) Select default Arduino board", defaultPanel, headerColor);
+            EditorGUILayout.LabelField("Choose you default Arduino-based hardware platform.");
+            //  .
+            GUILayout.Space(5f);
+            UduinoManager t = (UduinoManager)target;
+            t.defaultArduinoBoardType = EditorGUILayout.Popup("Default Board", t.defaultArduinoBoardType, BoardsTypeList.Boards.ListToNames());
+            GUILayout.Space(5f);
+
+            EditorGUILayout.HelpBox("Uduino is compatible with a wide range of hardware. This setting will affect the Uduino handles the pinout. At any moment, you can select your default Arduino board in the Uduino Panel > Advanced > Board Type", MessageType.Info, true);
+            
+            EditorGUILayout.Separator();
+
+
+            DrawHeaderTitle("4. Start using Uduino!", defaultPanel, headerColor);
+
+            if (firstDone && secondDone)
+            {
+                DrawLine(12, 0, 45);
+                GUILayout.BeginVertical();
+                SetGUIBackgroundColor("#4FC3F7");
+                if (GUILayout.Button("I'm ready !"))
+                {
+                    AddProjectDefine("UDUINO_READY");
+                }
+
+                GUILayout.EndVertical();
+                EditorGUILayout.Separator();
+
+            }
+            else
+            {
+                if (!firstDone)
+                    EditorGUILayout.HelpBox("Add Uduino library into your Arduino folder", MessageType.Warning, true);
+                if (!secondDone)
+                    EditorGUILayout.HelpBox("Modify the project settings", MessageType.Warning, true);
+
+                DrawLine(12, 0, 45);
+                GUILayout.BeginVertical();
+                GUILayout.BeginHorizontal();
+
+                if (GUILayout.Button("Skip setup", GUILayout.MaxWidth(90)))
+                {
+                    AddProjectDefine("UDUINO_READY");
+                }
+                EditorGUI.BeginDisabledGroup(true);
+                if (GUILayout.Button("Not ready yet..."))
+                {
+
+                }
+                EditorGUI.EndDisabledGroup();
+
+                GUILayout.EndHorizontal();
+
+
+                GUILayout.EndVertical();
+                EditorGUILayout.Separator();
+
+            }
+
+            EditorGUILayout.Separator();
+        }
+
+
+   
+#endif // end !UDUINO_READY
+
+
 
         public void CheckUpdate()
         {
@@ -778,60 +1044,12 @@ namespace Uduino
             }
             EditorGUILayout.Separator();
         }
-    
-        void MoveArduinoFiles(string dest)
-        {
-            string sourceDirectory = Application.dataPath + "/Uduino/Arduino/libraries";
-            string destinationDirectory = FirstToLower(dest);
-            MoveDirectory(sourceDirectory, destinationDirectory);
-        }
 
-        public static void MoveDirectory(string source, string target)
-        {
-            var stack = new Stack<Folders>();
-            stack.Push(new Folders(source, target));
-
-            while (stack.Count > 0)
-            {
-                var folders = stack.Pop();
-                Directory.CreateDirectory(folders.Target);
-                foreach (var file in Directory.GetFiles(folders.Source, "*.*"))
-                {
-                    string targetFile = Path.Combine(folders.Target, Path.GetFileName(file));
-                    if (Path.GetExtension(file) != ".meta")
-                    {
-                        if (File.Exists(targetFile))
-                            File.Delete(targetFile);
-                        File.Move(file, targetFile);
-                    }
-                }
-
-                foreach (var folder in Directory.GetDirectories(folders.Source))
-                {
-                    stack.Push(new Folders(folder, Path.Combine(folders.Target, Path.GetFileName(folder))));
-                }
-            }
-            Directory.Delete(source, true);
-            FileUtil.DeleteFileOrDirectory("Assets/Uduino/Arduino");
-        }
-
-        public class Folders
-        {
-            public string Source { get; private set; }
-            public string Target { get; private set; }
-
-            public Folders(string source, string target)
-            {
-                Source = source;
-                Target = target;
-            }
-        }
-            #endregion
 
         #region Detect Plugins
         public static System.Type[] GetAllSubTypes(System.Type aBaseClass)
         {
-           var result = new System.Collections.Generic.List<System.Type>();
+            var result = new System.Collections.Generic.List<System.Type>();
             System.Reflection.Assembly[] AS = System.AppDomain.CurrentDomain.GetAssemblies();
             foreach (var A in AS)
             {
@@ -855,6 +1073,7 @@ namespace Uduino
             return extensionsNames;
         }
 
+#if UDUINO_READY
         public void FindExistingExtensions()
         {
             List<string> subTypes = GetExtensionsSubTypes();
@@ -863,9 +1082,178 @@ namespace Uduino
 
             foreach (KeyValuePair<string, string> extensionType in Manager.existingExtensionsMap)
             {
-                if(subTypes.Contains(extensionType.Key))
+                if (subTypes.Contains(extensionType.Key))
                     Manager.presentExtentionsMap[extensionType.Key] = true;
             }
+        }
+
+#else
+        public void FindExistingExtensions() { }
+#endif
+
+
+        #endregion
+
+        public override void OnInspectorGUI()
+        {
+#if UDUINO_READY
+            if (manager == null)
+                manager = (UduinoManager)target;
+#endif
+
+            DrawOnInspectorGUI();
+        }
+
+
+        // MAIN UDUINO READY CODE 
+
+
+
+#if UDUINO_READY
+
+        #region Compatibility & Plugins 
+        public void CheckCompatibilityErrors()
+        {
+            bool standalonebuildTarget = (
+#if UNITY_2018_1_OR_NEWER
+            EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSX ||
+#else
+            EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSXUniversal ||
+            EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneOSXIntel64 ||
+#endif
+            EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows ||
+                EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneWindows64 ||
+                EditorUserBuildSettings.activeBuildTarget == BuildTarget.StandaloneLinux64);
+
+
+            if (standalonebuildTarget && !Manager.ExtensionIsPresentAndActive("UduinoDevice_Wifi") &&
+                !Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopBluetoothLE") && !Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopSerial"))
+            {
+                EditorGUILayout.HelpBox("To build for desktop, select at least one connection type.", MessageType.Warning, true);
+            }
+            else if ((Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopBluetoothLE") ||
+                Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopSerial"))
+                && !standalonebuildTarget)
+            {
+                GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
+                EditorGUI.indentLevel--;
+                EditorGUILayout.HelpBox("Build target set for Android but Uduino desktop is selected.", MessageType.Warning, true);
+                if (GUILayout.Button("Switch build target to Standalone"))
+                {
+                    EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BuildTarget.StandaloneWindows);
+                }
+                EditorGUI.indentLevel++;
+                GUILayout.EndVertical();
+            }
+
+            if (Manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidBluetoothLE") && Manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidSerial"))
+            {
+                EditorGUILayout.HelpBox("Having both Android BLE and Android Serial cause some conflits when building.", MessageType.Warning, true);
+            }
+
+            if (Manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidBluetoothLE") &&
+                PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel22 &&
+                PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevel23)
+            {
+                EditorGUI.indentLevel--;
+
+                GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
+                SetGUIBackgroundColor();
+                SetGUIBackgroundColor("#ef5350");
+                EditorGUILayout.HelpBox("Change the Arduino settings for Uduino Bluetooth", MessageType.Error, true);
+                EditorGUI.indentLevel++;
+                GUILayout.BeginHorizontal();
+                SetGUIBackgroundColor("#4FC3F7");
+                if (PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel22 && GUILayout.Button("Min SDK Version: 21"))
+                {
+                    PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel22;
+                }
+                if (PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevel23 && GUILayout.Button("Target SDK Version: 23"))
+                {
+                    PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel23;
+                }
+                GUILayout.EndHorizontal();
+                GUILayout.EndVertical();
+
+                SetGUIBackgroundColor();
+            }
+            else if (Manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidSerial") &&
+                PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel22 &&
+                PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevel23)
+            {
+                EditorGUI.indentLevel--;
+
+                // GUILayout.BeginVertical("Box", GUILayout.ExpandWidth(true));
+                GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
+                SetGUIBackgroundColor();
+                SetGUIBackgroundColor("#ef5350");
+                EditorGUILayout.HelpBox("Change the Arduino settings for Uduino Android Serial", MessageType.Error, true);
+                EditorGUI.indentLevel++;
+                GUILayout.BeginHorizontal();
+                SetGUIBackgroundColor("#4FC3F7");
+                if (PlayerSettings.Android.minSdkVersion != AndroidSdkVersions.AndroidApiLevel22 && GUILayout.Button("Min SDK Version: 19"))
+                {
+                    PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel22;
+                }
+                if (PlayerSettings.Android.targetSdkVersion != AndroidSdkVersions.AndroidApiLevel23 && GUILayout.Button("Target SDK Version: 23"))
+                {
+                    PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel23;
+                }
+                GUILayout.EndHorizontal();
+                GUILayout.EndVertical();
+
+                SetGUIBackgroundColor();
+            }
+        }
+
+        public void SetConnectionTypeMessage()
+        {
+#if !UDUINO_DESKTOP_BLE
+            if (Manager.ExtensionIsPresent("UduinoDevice_DesktopBluetoothLE"))
+            {
+                EditorGUILayout.HelpBox(" It seem that you just added the Desktop Bluetooth Plugin. Click to finish the setup.", MessageType.Info);
+                if (GUILayout.Button("Setup the Desktop BLE plugin"))
+                {
+                    AddProjectDefine("UDUINO_DESKTOP_BLE");
+                }
+            }
+#endif
+
+#if !UDUINO_ANDROID_BLE
+            if (Manager.ExtensionIsPresent("UduinoDevice_AndroidBluetoothLE"))
+            {
+                EditorGUILayout.HelpBox(" It seem that you just added the Android Bluetooth Plugin. Click to finish the setup.", MessageType.Info);
+                if (GUILayout.Button("Setup the Android BLE plugin"))
+                {
+                    AddProjectDefine("UDUINO_ANDROID_BLE");
+                }
+            }
+#endif
+
+
+#if !UDUINO_WIFI
+            if (Manager.ExtensionIsPresent("UduinoDevice_Wifi"))
+            {
+                EditorGUILayout.HelpBox(" It seem that you just added the Wifi Plugin. Click to finish the setup.", MessageType.Info);
+                if (GUILayout.Button("Setup the Wifi plugin"))
+                {
+                    AddProjectDefine("UDUINO_WIFI");
+                }
+            }
+#endif
+
+
+#if !UDUINO_ANDROID_SERIAL
+            if (Manager.ExtensionIsPresent("UduinoDevice_AndroidSerial"))
+            {
+                EditorGUILayout.HelpBox(" It seem that you just added the Android Serial Plugin. Click to finish the setup.", MessageType.Info);
+                if (GUILayout.Button("Setup the Android Serial plugin"))
+                {
+                    AddProjectDefine("UDUINO_ANDROID_SERIAL");
+                }
+            }
+
+#endif
         }
 
 
@@ -876,7 +1264,7 @@ namespace Uduino
                 bool isExtensionActive = false;
                 Manager.activeExtentionsMap.TryGetValue(presentExtension.Key, out isExtensionActive);
                 bool isActiveValue = isExtensionActive;
-                if(!force)
+                if (!force)
                     isActiveValue = EditorGUILayout.Toggle(Manager.existingExtensionsMap[presentExtension.Key], isExtensionActive);
 
                 if (isActiveValue != isExtensionActive || force)
@@ -906,12 +1294,18 @@ namespace Uduino
                             currentPlugin.SetCompatibleWithPlatform(BuildTarget.StandaloneWindows64, isActiveValue);
                             break;
                     }
-                    if(!force)
+                    if (!force)
                         Manager.activeExtentionsMap[presentExtension.Key] = isActiveValue;
                 }
             }
         }
-            #endregion
+
+
+
+        #endregion
+
+
+
 
         #region GetPanel
         void SavePanel()
@@ -929,13 +1323,10 @@ namespace Uduino
             eventsPanel = EditorPrefs.GetBool("uduinoPanelEvents", eventsPanel);
             advancedPanel = EditorPrefs.GetBool("uduinoPanelAdvanced", advancedPanel);
         }
-            #endregion
+        #endregion
 
-        public override void OnInspectorGUI()
+        public void DrawOnInspectorGUI()
         {
-            if (manager == null)
-                manager = (UduinoManager)target;
-
             Log.SetLogLevel(manager.debugLevel);
             SetColorAndStyles();
 
@@ -946,6 +1337,8 @@ namespace Uduino
             defaultPanel = DrawHeaderTitle("Uduino Settings", defaultPanel, headerColor);
             if (defaultPanel)
             {
+                SetConnectionTypeMessage();
+
                 CheckCompatibility();
                 DefaultPanel();
                 CheckUpdate();
@@ -972,16 +1365,17 @@ namespace Uduino
             // Application Playing is needed to force detecting The board in pause mode
             // It forces a loop in a way. TODO: This will not be needed if the board is detected in thread but not loop
             if (EditorGUI.EndChangeCheck() ||
-                (!Application.isPlaying && Manager.ManagerState != UduinoManagerState.Idle)) 
-            EditorUtility.SetDirty(Manager); //TODO : The values serialized are not updated if it's not forced
+                (!Application.isPlaying && Manager.ManagerState != UduinoManagerState.Idle))
+                EditorUtility.SetDirty(Manager); //TODO : The values serialized are not updated if it's not forced
 
+            // EditorUtility.SetDirty(Manager);
 
-            #region Stop All pins on Pause
+        #region Stop All pins on Pause
             if (Manager.stopAllOnPause && Application.isPlaying && EditorApplication.isPaused && !isPlayAndPause)
             {
                 isPlayAndPause = true;
                 foreach (Pin pinTarget in Manager.pins)
-                  pinTarget.Destroy();
+                    pinTarget.Destroy();
                 Manager.SendBundle("destroy");
             }
             if (Manager.stopAllOnPause && (isPlayAndPause && !Application.isPlaying) || (isPlayAndPause && !EditorApplication.isPaused))
@@ -991,7 +1385,7 @@ namespace Uduino
             }
 
             SavePanel();
-            #endregion
+        #endregion
         }
 
         #region Default Panel
@@ -1020,7 +1414,7 @@ namespace Uduino
 
             GUILayout.Label("Arduino", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
-            
+
             if (baudRateIndex != baudRates.Length - 1)
                 baudRateIndex = System.Array.IndexOf(baudRates, Manager.BaudRate.ToString());
             if (baudRateIndex == -1) baudRateIndex = baudRates.Length - 1;
@@ -1031,13 +1425,29 @@ namespace Uduino
                 manager.BaudRate = EditorGUILayout.IntField("Speed", manager.BaudRate);
                 prevBaudRateIndex = baudRateIndex;
             } else if (prevBaudRateIndex != baudRateIndex) {
-                 int result = 9600;
-                 int.TryParse(baudRates[baudRateIndex], out result);
-                 manager.BaudRate = result;
-                 prevBaudRateIndex = baudRateIndex;
+                int result = 9600;
+                int.TryParse(baudRates[baudRateIndex], out result);
+                manager.BaudRate = result;
+                prevBaudRateIndex = baudRateIndex;
             }
-            EditorGUI.indentLevel--;
+            Manager.defaultArduinoBoardType = EditorGUILayout.Popup("Board Type", Manager.defaultArduinoBoardType, BoardsTypeList.Boards.ListToNames());
 
+            EditorGUI.indentLevel--;
+#if !UDUINO_MEGA_MESSAGE
+            GUILayout.BeginVertical("GroupBox", GUILayout.ExpandWidth(true));
+            EditorGUILayout.HelpBox("If you are using an Arduino Mega or Mega 2560, you need to change the Uduino settings: [Advanced > Discover Delay] to 2 seconds or more.", MessageType.Info);
+            if (GUILayout.Button("I am not using an Arduino Mega"))
+            {
+                AddProjectDefine("UDUINO_MEGA_MESSAGE");
+            }
+            if (GUILayout.Button("I am using an Arduino Mega, fix now."))
+            {
+                Manager.defaultArduinoBoardType = BoardsTypeList.Boards.GetBoardIdFromName("Arduino Mega");
+                Manager.delayBeforeDiscover = 2;
+                AddProjectDefine("UDUINO_MEGA_MESSAGE");
+            }
+            GUILayout.EndVertical();
+#endif
             // Extension settings
             if (Manager.ExtensionIsPresentAndActive("UduinoDevice_AndroidSerial"))
             {
@@ -1069,23 +1479,24 @@ namespace Uduino
                 GUILayout.Label("Wifi Options", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
                 DrawWifiBoardsLayout();
-              //  Manager.uduinoIpAddress = EditorGUILayout.TextField("Board IP Address", Manager.uduinoIpAddress);
-            //    Manager.uduinoWifiPort = EditorGUILayout.IntField("Connection port", Manager.uduinoWifiPort);
+                //  Manager.uduinoIpAddress = EditorGUILayout.TextField("Board IP Address", Manager.uduinoIpAddress);
+                //    Manager.uduinoWifiPort = EditorGUILayout.IntField("Connection port", Manager.uduinoWifiPort);
                 EditorGUI.indentLevel--;
+                DrawWifiBoardsErrors();
             }
 
 
 
             EditorGUILayout.Separator();
         }
-            #endregion
+        #endregion
 
         #region Arduino Settings
         public void ArduinoSettings()
         {
+
             if (!Manager.hasBoardConnected())
             {
-
                 SetGUIBackgroundColor("#ef5350");
                 GUILayout.BeginVertical("GroupBox", GUILayout.ExpandWidth(true));
                 GUILayout.Label("No Arduino connected", boldtext);
@@ -1097,9 +1508,9 @@ namespace Uduino
                 foreach (KeyValuePair<string, UduinoDevice> uduino in Manager.uduinoDevices)
                 {
                     // send extra queue 
-                    if(!Application.isPlaying)
+                    if (!Application.isPlaying)
                     {
-                        if(uduino.Value.writeQueue.Count > 0)
+                        if (uduino.Value.writeQueue.Count > 0)
                         {
                             Manager.ReadWriteArduino(uduino.Value);
                         }
@@ -1127,8 +1538,8 @@ namespace Uduino
                     GUILayout.EndVertical();
                     GUILayout.Space(10f);
 
-            #region Pin Active
-                    if ( (uduino.Key.Contains("uduinoBoard") || uduino.Key.Contains("uduino")) && Application.isPlaying)
+        #region Pin Active
+                    if ((uduino.Key.Contains("uduinoBoard") || uduino.Key.Contains("uduino")) && Application.isPlaying)
                     {
                         Rect headerRect = GUILayoutUtility.GetRect(0, -1, GUILayout.ExpandWidth(true));
                         headerRect.xMin += 6; headerRect.xMax -= 6; // Left right padding
@@ -1152,11 +1563,13 @@ namespace Uduino
                         if (Manager.pins.Count != 0) // If a pin is active
                         {
                             bool hasScriptedPin = false;
+                            int numberOfPinReading = 0;
                             foreach (Pin pin in Manager.pins)
                             {
                                 if ((pin.device == uduino.Value || pin.device == null) && !pin.isEditorPin)
                                 {
-                                    DrawPinUI(contentRect,pin, uduino.Value._boardType);
+                                    DrawPinUI(contentRect, pin, uduino.Value._boardType);
+                                    if (pin.pinMode == PinMode.Input || pin.pinMode == PinMode.Input_pullup) numberOfPinReading++;
                                     EditorGUILayout.LabelField("");
                                     hasScriptedPin = true;
                                     GUILayout.Space(3f);
@@ -1165,19 +1578,24 @@ namespace Uduino
                             }
                             if (!hasScriptedPin)
                                 GUILayout.Label("No arduino pins are currently setup by code.");
+                            if (numberOfPinReading >= 5 && Manager.alwaysRead == true && Manager.threadIdleDelay >= 16)
+                            {
+                                EditorGUILayout.HelpBox("You are reading several Pins but your thread reading frequency seem be too low. To optimize Uduino, reduce the thread frequency and the timeouts in the Advanced Settings. If you don't need to always read the pins, disable 'always read'.", MessageType.Info);
+                            }
                         }
                         else // if no pins are active
                         {
                             GUILayout.Label("No arduino pins are currently setup by code.");
                         }
                         GUILayout.Space(5f);
-                    
+
                         GUILayout.EndVertical();
                         GUILayout.Space(10f);
                     }
-            #endregion
+        #endregion
 
-            #region Send Command
+        #region Send Command
+                    bool commandIsSent = false;
                     // GUILayout.Label("Send commands", EditorStyles.boldLabel);
                     //GUILayout.BeginVertical("Box");
                     if (uduino.Key.Contains("uduinoBoard") || uduino.Key.Contains("uduino") || Manager.forcePinEditor) // Display the informations for default Uduino Board
@@ -1199,7 +1617,7 @@ namespace Uduino
                         GUILayout.Space(5f);
                         GUILayout.Label("");
 
-                        message = GUI.TextField(new Rect(contentRect.x  , contentRect.y + 2, contentRect.width / 2, 14), message, "TextFieldDropDownText");
+                        message = GUI.TextField(new Rect(contentRect.x, contentRect.y + 2, contentRect.width / 2, 14), message, "TextFieldDropDownText");
 
                         if (GUI.Button(new Rect(contentRect.x + contentRect.width / 2, contentRect.y + 2, contentRect.width / 4, 16), "Send", "minibuttonmid")) {
                             if (messageValue != "") Manager.sendCommand(uduino.Value, message + " " + messageValue);
@@ -1207,21 +1625,23 @@ namespace Uduino
                             Manager.Read(uduino.Value);
                             Manager.ReadWriteArduino(uduino.Value);
                             EditorUtility.SetDirty(target);
+                            commandIsSent = true;
                         }
                         if (GUI.Button(new Rect(contentRect.x + contentRect.width / 4 * 3, contentRect.y + 2, contentRect.width / 4, 16), "Read", "minibuttonright")) {
                             Manager.ReadWriteArduino(uduino.Value);
                             EditorUtility.SetDirty(target);
+                            commandIsSent = true;
                         }
 
                         GUILayout.Space(5f);
                         GUILayout.EndVertical();
                         GUILayout.Space(10f);
-                       
+
                     }
                     //  GUILayout.EndVertical();
-            #endregion
+        #endregion
 
-            #region Board settings
+        #region Board settings
                     //More setings
                     //  EditorGUILayout.Separator();
                     bool foldout = EditorPrefs.GetBool(uduino.Key);
@@ -1244,27 +1664,49 @@ namespace Uduino
                         uduino.Value.readTimeout = EditorGUILayout.IntField("Read timeout", uduino.Value.readTimeout);
                         uduino.Value.writeTimeout = EditorGUILayout.IntField("Write timeout", uduino.Value.writeTimeout);
                         uduino.Value.alwaysRead = EditorGUILayout.Toggle("Always read", uduino.Value.alwaysRead);
+                        uduino.Value.readInEditor = EditorGUILayout.Toggle("Always read Editor", uduino.Value.readInEditor);
 
                         if (!uduino.Value.alwaysRead)
                             uduino.Value.readAfterCommand = EditorGUILayout.Toggle("Read after commands", uduino.Value.readAfterCommand);
 
                         EditorGUI.indentLevel++;
                         GUILayout.BeginVertical();
-                      
-                      
-                        if (GUILayout.Button("Unset pins",GUILayout.ExpandWidth(true)))
+
+
+                        if (GUILayout.Button("Unset pins", GUILayout.ExpandWidth(true)))
                         {
                             foreach (Pin pin in Manager.pins.ToArray())
                             {
-                                if(pin.device == null || pin.device == uduino.Value)
+                                if (pin.device == null || pin.device == uduino.Value)
                                 {
                                     pin.Destroy();
                                     Manager.pins.Remove(pin);
                                 }
                             }
                             Manager.SendBundle("destroy");
-                           // Manager.pins.Clear();
+                            // Manager.pins.Clear();
                         }
+
+                        GUILayout.Space(5f);
+
+
+                        EditorGUI.indentLevel--;
+                        GUILayout.BeginVertical("RL Header");
+                        GUILayout.Space(1f);
+                        EditorGUILayout.LabelField("Messages details", EditorStyles.boldLabel);
+                        GUILayout.EndVertical();
+                        GUILayout.BeginVertical("RL Background");
+                        GUILayout.Space(1f);
+                        if (uduino.Value.alwaysRead)
+                        {
+                            EditorGUILayout.LabelField("Incomming messages speed: " + uduino.Value.fps + "fps");
+                        }
+                        EditorGUILayout.LabelField("Last read message length: " + uduino.Value.lastRead.Length + " chars.");
+                        EditorGUILayout.LabelField("Last write message length: " + uduino.Value.lastRead.Length + " chars.");
+                        GUILayout.EndVertical();
+                        EditorGUI.indentLevel++;
+
+
                         GUILayout.EndVertical();
                         if (Manager.uduinoDevices.Count > 1)
                         {
@@ -1278,28 +1720,66 @@ namespace Uduino
                             GUILayout.EndVertical();
                         }
                         EditorGUI.indentLevel--; EditorGUI.indentLevel--;
-                    }
+                    } // End setting foldout 
                     GUILayout.Space(5f);
 
-                    if (uduino.Value.alwaysRead || uduino.Value.readAfterCommand)
+                    if (uduino.Value.alwaysRead || (uduino.Value.readAfterCommand && commandIsSent))
+                    {
+                        if (uduino.Value.readInEditor)
+                            Manager.ReadWriteArduino(uduino.Value);
                         EditorUtility.SetDirty(target);
-            #endregion
+                        commandIsSent = false;
+                    }
+        #endregion
                 }
             }
 
-            #region Discover/Close
-            DrawLine(12, 0, 45);
+        #region Discover/Close
+            /* TODO : Editor BLE
+            if (Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopBluetoothLE"))
+            {
+                GUILayout.BeginVertical();
+                if (GUILayout.Button("Scan BLE Devices"))
+                {
+                    Manager.DiscoverPorts();
 
+                }
+                if(Manager.boardConnection != null)
+                {
+                    UduinoConnection_DesktopBluetoothLE bleConnection = Manager.boardConnection as UduinoConnection_DesktopBluetoothLE;
+                    Manager.boardConnection.ScanForDevices();
+
+                    if (bleConnection != null)
+                    {
+                        foreach (KeyValuePair<string, string> kvp in bleConnection.availableDevices)
+                        {
+                            GUILayout.Label(kvp.Key + " " + kvp.Value, EditorStyles.boldLabel);
+                        }
+                    }
+
+                }
+                GUILayout.EndVertical();
+            }*/
+
+
+            bool canDiscoverPorts = true;
+            if (Manager.ExtensionIsPresentAndActive("UduinoDevice_DesktopBluetoothLE") && !Application.isPlaying)
+            {
+                canDiscoverPorts = false;
+            }
             EditorGUI.BeginChangeCheck();
+            DrawLine(12, 0, canDiscoverPorts ? 45 : 80);
+            GUI.enabled = canDiscoverPorts;
+
 
             GUILayout.BeginHorizontal();
+
 
             GUILayout.BeginVertical();
             SetGUIBackgroundColor("#4FC3F7");
             if (GUILayout.Button("Discover ports"))
             {
                 Manager.DiscoverPorts();
-
             }
             GUILayout.EndVertical();
 
@@ -1308,7 +1788,6 @@ namespace Uduino
             if (GUILayout.Button("Close ports"))
             {
                 Manager.FullReset();
-                //Manager.pins.Clear();
             }
             SetGUIBackgroundColor();
             GUILayout.EndVertical();
@@ -1317,10 +1796,14 @@ namespace Uduino
             if (EditorGUI.EndChangeCheck())
                 EditorUtility.SetDirty(target);
 
+            GUI.enabled = true;
+            if (!canDiscoverPorts) EditorGUILayout.HelpBox("It is not possible to discover BLE devices in editor mode.", MessageType.Error, true);
+
             EditorGUILayout.Separator();
-            #endregion
+
+        #endregion
         }
-            #endregion
+        #endregion
 
         #region Events
         public void ArduinoEvents()
@@ -1349,7 +1832,7 @@ namespace Uduino
 
 
         }
-            #endregion
+        #endregion
 
         #region Advanced Settings
         public void AdvancedSettings()
@@ -1359,8 +1842,8 @@ namespace Uduino
             Manager.defaultArduinoBoardType = EditorGUILayout.Popup("Board Type", Manager.defaultArduinoBoardType, BoardsTypeList.Boards.ListToNames());
             Manager.readTimeout = EditorGUILayout.IntField("Read timeout", Manager.readTimeout);
             Manager.writeTimeout = EditorGUILayout.IntField("Write timeout", Manager.writeTimeout);
-            Manager.threadFrequency = EditorGUILayout.IntField("Thread Frequency", Manager.threadFrequency);
-            if(Manager.defaultArduinoBoardType == BoardsTypeList.Boards.GetBoardIdFromName("Arduino Mega") && Manager.delayBeforeDiscover < 1)
+            Manager.threadIdleDelay = EditorGUILayout.IntField("Thread Frequency", Manager.threadIdleDelay);
+            if (Manager.defaultArduinoBoardType == BoardsTypeList.Boards.GetBoardIdFromName("Arduino Mega") && Manager.delayBeforeDiscover < 1)
                 EditorGUILayout.HelpBox("For Arduino Mega, please increase the value \"Discover Delay\" to more than 1 second.", MessageType.Error, true);
             EditorGUI.indentLevel--;
 
@@ -1376,23 +1859,25 @@ namespace Uduino
             if (manager.LimitSendRate = EditorGUILayout.Toggle("Limit Send Rate", Manager.LimitSendRate))
                 if (manager.LimitSendRate)
                 {
-                    Manager.SendRateSpeed = EditorGUILayout.IntField("Send Rate speed", Manager.SendRateSpeed);
+                    Manager.SendRateDelay = EditorGUILayout.IntField("Send Rate Delay", Manager.SendRateDelay);
                     EditorGUILayout.Separator();
                 }
             Manager.alwaysRead = EditorGUILayout.Toggle("Always read", Manager.alwaysRead);
-            if(!Manager.alwaysRead)
+            Manager.readLineCharByChar = EditorGUILayout.Toggle("Read Serial Lines by chars", Manager.readLineCharByChar);
+            if (!Manager.alwaysRead)
                 Manager.readAfterCommand = EditorGUILayout.Toggle("Read after commands", Manager.readAfterCommand);
 
             Manager.skipMessageQueue = EditorGUILayout.Toggle("Skip Queue", Manager.skipMessageQueue);
-            if(!Manager.skipMessageQueue)
+            if (!Manager.skipMessageQueue)
                 Manager.messageQueueLength = EditorGUILayout.IntField("Queue size", Manager.messageQueueLength);
-            if(Application.isPlaying && Manager.hasBoardConnected())
+
+            if (Application.isPlaying && Manager.hasBoardConnected() && !Manager.skipMessageQueue)
             {
                 EditorGUI.indentLevel++;
                 foreach (KeyValuePair<string, UduinoDevice> item in Manager.uduinoDevices)
                 {
-                    EditorGUILayout.LabelField("Read Queue size", "" + item.Value.readQueue.Count);
-                    EditorGUILayout.LabelField("Write Queue size", "" + item.Value.writeQueue.Count);
+                    EditorGUILayout.LabelField(item.Value.name + " Read Queue size", "" + item.Value.readQueue.Count);
+                    EditorGUILayout.LabelField(item.Value.name + " Write Queue size", "" + item.Value.writeQueue.Count);
                 }
                 EditorGUI.indentLevel--;
             }
@@ -1401,9 +1886,11 @@ namespace Uduino
             GUILayout.Label("Discovery settings", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
             Manager.autoDiscover = EditorGUILayout.Toggle("Discover on play", Manager.autoDiscover);
-            if(Manager.autoDiscover)
+            if (Manager.autoDiscover)
                 Manager.delayBeforeDiscover = EditorGUILayout.FloatField("Discover delay", Manager.delayBeforeDiscover);
             Manager.DiscoverTries = EditorGUILayout.IntField("Discovery tries", Manager.DiscoverTries);
+            if (Manager.autoReconnect && Application.isPlaying)
+                EditorGUILayout.LabelField("Manager Sate", "" + Manager.ManagerState.ToString());
 
             blacklistedFoldout = EditorGUI.Foldout(GUILayoutUtility.GetRect(40f, 40f, 16f, 16f, EditorStyles.foldout), blacklistedFoldout, "Blacklisted ports", true, EditorStyles.foldout);
 
@@ -1489,10 +1976,13 @@ namespace Uduino
                     if (uwr.isError)
 
 #elif UNITY_2020
-               if (uwr.result == UnityWebRequest.Result.ConnectionError)
+                    if (uwr.result == UnityWebRequest.Result.ConnectionError)
+
+#elif UNITY_2021
+                    if (uwr.isNetworkError)
 
 #else
-                    if (uwr.isNetworkError)
+                    if (uwr.result == UnityWebRequest.Result.ConnectionError)
 #endif
                         Debug.Log("Error while getting the data");
                     else
@@ -1542,7 +2032,10 @@ namespace Uduino
 
             EditorGUILayout.Separator();
         }
-            #endregion
+        #endregion
+
+  
+        #region Read and write values to Pins
 
         void CheckChanges(Pin pin)
         {
@@ -1552,8 +2045,8 @@ namespace Uduino
                         if (pin.pinMode != pin.prevPinMode) {
                             pinTarget.OverridePinMode(pin.pinMode);
                         }
-                       // pinTarget.lastReadValue = pin.lastReadValue;
-                      // pinTarget.sendValue = pin.sendValue;
+                        // pinTarget.lastReadValue = pin.lastReadValue;
+                        // pinTarget.sendValue = pin.sendValue;
                     }
                 }
             }
@@ -1567,10 +2060,9 @@ namespace Uduino
                 WriteMessage(pin.device, UduinoManager.BuildMessageParameters("s", pin.currentPin, (int)pin.pinMode));
                 pin.prevPinMode = pin.pinMode;
             }
-
         }
 
-        #region Read and write values to Pins
+
         public void ParseReadData(string data)
         {
             //  Debug.Log(""); //This yield is cool !
@@ -1620,433 +2112,10 @@ namespace Uduino
             Manager.DirectReadFromArduino(target, variable, action: action);
             Manager.ReadWriteArduino(target);
         }
-            #endregion
-    
-    }
-
-#else
-
-        [CustomEditor(typeof(UduinoManager))]
-        public class UduinoManagerEditor : Editor
-        {
-
-            public static UduinoManagerEditor Instance { get; private set; }
-
-            #region Variables
-            //Style-relatedx
-            Color headerColor = new Color(0.65f, 0.65f, 0.65f, 1);
-            //Color backgroundColor = new Color(0.75f, 0.75f, 0.75f);
-            Color defaultButtonColor;
-
-            GUIStyle boldtext = null;
-            GUIStyle olLight = null;
-            GUIStyle olInput = null;
-            GUIStyle customFoldtout = null;
-            #endregion
-
-            const string define = "UDUINO_READY";
-
-            bool defaultPanel = true;
-            bool firstDone = false;
-            bool secondDone = false;
-
-            void OnEnable()
-            {
-                Instance = this;
-                FindExistingExtensions();
-                UduinoManager t = (UduinoManager)target;
-                t.activeExtentionsMap["UduinoDevice_DesktopSerial"] = true;
-            }
-
-            #region Styles
-            void SetColorAndStyles()
-            {
-                if (boldtext == null)
-                {
-                    //Color and GUI
-                    defaultButtonColor = GUI.backgroundColor;
-                    if (!EditorGUIUtility.isProSkin)
-                    {
-                        headerColor = new Color(165 / 255f, 165 / 255f, 165 / 255f, 1);
-                        //  backgroundColor = new Color(193 / 255f, 193 / 255f, 193 / 255f, 1);
-                    }
-                    else
-                    {
-                        headerColor = new Color(41 / 255f, 41 / 255f, 41 / 255f, 1);
-                        //    backgroundColor = new Color(56 / 255f, 56 / 255f, 56 / 255f, 1);
-                    }
-
-                    boldtext = new GUIStyle(GUI.skin.label);
-                    boldtext.fontStyle = FontStyle.Bold;
-                    boldtext.alignment = TextAnchor.UpperCenter;
-
-                    olLight = new GUIStyle("OL Title");
-                    olLight.fontStyle = FontStyle.Normal;
-                    olLight.font = GUI.skin.button.font;
-                    olLight.fontSize = 9;
-                    olLight.alignment = TextAnchor.MiddleCenter;
-
-                    olInput = new GUIStyle("TE toolbar");
-                    olInput.fontStyle = FontStyle.Bold;
-                    olInput.fontSize = 10;
-                    olInput.alignment = TextAnchor.MiddleLeft;
-
-                    customFoldtout = new GUIStyle(EditorStyles.foldout);
-                    customFoldtout.fontStyle = FontStyle.Bold;
-
-                }
-            }
-
-            void SetGUIBackgroundColor(string hex)
-            {
-                Color color = new Color();
-                ColorUtility.TryParseHtmlString(hex, out color);
-                GUI.backgroundColor = color;
-            }
-            void SetGUIBackgroundColor(Color color)
-            {
-                GUI.backgroundColor = color;
-            }
-            void SetGUIBackgroundColor()
-            {
-                GUI.backgroundColor = defaultButtonColor;
-            }
-
-        public void DrawLogo()
-        {
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace(); // Nededed for lastRect
-            EditorGUILayout.EndHorizontal();
-
-            // load textures
-            Texture tex = (Texture)EditorGUIUtility.Load("Assets/Uduino/Editor/Resources/uduino-logo.png");
-            Texture tex2 = (Texture)EditorGUIUtility.Load("Assets/Uduino/Editor/Resources/arduino-bg.png");
-            GUILayout.Space(0);
-
-
-            Color bgColor = new Color();
-            ColorUtility.TryParseHtmlString("#ffffff", out bgColor);
-
-            //draw bg
-            Rect lastRect = GUILayoutUtility.GetLastRect();
-
-#if UNITY_2017 || UNITY_2018
-            EditorGUI.DrawRect(new Rect(lastRect.x - 15, lastRect.y , Screen.width + 1, 70f), bgColor); // Fix for Unity 2018
-#else
-            EditorGUI.DrawRect(new Rect(0, 0, Screen.width + 1, 70f), bgColor);
-#endif           
-            lastRect = GUILayoutUtility.GetLastRect();
-            // draw text
-            GUIStyle smallFont = new GUIStyle();
-            smallFont.fontSize = 8;
-            smallFont.alignment = TextAnchor.UpperRight;
-            EditorGUI.LabelField(new Rect(lastRect.x - 35, lastRect.y, Screen.width, 60f), "v." + UduinoVersion.getVersion() + " ", smallFont);
-
-            // draw Textures
-            GUI.DrawTexture(new Rect(Screen.width / 2 - tex.width / 2 - 30, lastRect.y - 5, tex2.width, tex2.height), tex2, ScaleMode.ScaleToFit);
-            GUI.DrawTexture(new Rect(Screen.width / 2 - tex.width / 2, lastRect.y + 6, tex.width, tex.height), tex, ScaleMode.ScaleToFit);
-
-            GUI.color = Color.white;
-            GUILayout.Space(60f);
-        }
-
-        public void DrawLine(int marginTop, int marginBottom, int height)
-            {
-                EditorGUILayout.Separator();
-                GUILayout.Space(marginTop);
-                Rect lastRect = GUILayoutUtility.GetLastRect();
-                GUI.Box(new Rect(0f, lastRect.y + 4, Screen.width, height), "");
-                GUILayout.Space(marginBottom);
-            }
-
-        public bool DrawHeaderTitle(string title, bool foldoutProperty, Color backgroundColor)
-        {
-            GUILayout.Space(0);
-            Rect lastRect = GUILayoutUtility.GetLastRect();
-            GUI.Box(new Rect(0, lastRect.y + 4, Screen.width, 27), "");
-            lastRect = GUILayoutUtility.GetLastRect();
-            EditorGUI.DrawRect(new Rect(lastRect.x - 15, lastRect.y + 5f, Screen.width, 25f), headerColor);
-            EditorGUI.DrawRect(new Rect(lastRect.x - 18, lastRect.y + 31f, Screen.width, 1), new Color(0.55f, 0.55f, 0.55f, 1));
-            EditorGUI.DrawRect(new Rect(lastRect.x - 18, lastRect.y + 4f, Screen.width, 1), new Color(0.55f, 0.55f, 0.55f, 1));
-#if UNITY_2018 || UNITY_5
-            GUI.Label(new Rect(lastRect.x, lastRect.y + 10, Screen.width, 25), title);
-#else
-            GUI.Label(new Rect(lastRect.x, lastRect.y + 5, Screen.width, 25), title);
-#endif
-            GUI.color = Color.clear;
-            if (GUI.Button(new Rect(0, lastRect.y + 4, Screen.width, 27), ""))
-            {
-                foldoutProperty = !foldoutProperty;
-            }
-            GUI.color = Color.white;
-            GUILayout.Space(30);
-            if (foldoutProperty) { GUILayout.Space(5); }
-            return foldoutProperty;
-        }
-
-
         #endregion
-        public void FindExistingExtensions() { }
 
-            public void CheckCompatibility()
-            {
-                var target = EditorUserBuildSettings.activeBuildTarget;
-                var group = BuildPipeline.GetBuildTargetGroup(target);
-
-#if UNITY_2018 || UNITY_2019 || UNITY_2020 || UNITY_2021
-                if (PlayerSettings.GetApiCompatibilityLevel(group) != ApiCompatibilityLevel.NET_4_6)
-#elif UNITY_5_6
-                if (PlayerSettings.GetApiCompatibilityLevel(group) == ApiCompatibilityLevel.NET_2_0_Subset)
-#else
-            if (PlayerSettings.apiCompatibilityLevel == ApiCompatibilityLevel.NET_2_0_Subset)
-#endif
-                {
-                    SetGUIBackgroundColor("#ef5350");
-#if UNITY_2018 || UNITY_2019 || UNITY_2020 || UNITY_2021
-                    EditorGUILayout.HelpBox("Uduino works with .NET 4.x", MessageType.Error, true);
-#else
-                EditorGUILayout.HelpBox("Uduino works with .NET 2.0 (not Subset).", MessageType.Error, true);
-#endif
-                    SetGUIBackgroundColor();
-
-                    DrawLine(12, 0, 45);
-
-                    SetGUIBackgroundColor("#4FC3F7");
-                    if (GUILayout.Button("Fix Now", GUILayout.ExpandWidth(true)))
-                    {
-#if UNITY_2018 || UNITY_2019 || UNITY_2020 || UNITY_2021
-                        PlayerSettings.SetApiCompatibilityLevel(group, ApiCompatibilityLevel.NET_4_6);
-#elif UNITY_5_6
-                        PlayerSettings.SetApiCompatibilityLevel(group, ApiCompatibilityLevel.NET_2_0);
-#else
-                        PlayerSettings.apiCompatibilityLevel = ApiCompatibilityLevel.NET_2_0;
-#endif
-                        PlayerSettings.runInBackground = true;
-                    }
-                    SetGUIBackgroundColor();
-                }
-                else
-                {
-                    //   EditorGUILayout.HelpBox("Project settings is already set to .NET 2.0", MessageType.Info, true);
-                    StepDone();
-                    secondDone = true;
-                }
-            }
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            string destinationFolder = "~/Documents/Arduino/libraries";
-#else
-        string destinationFolder = "C:/Users/" + Environment.UserName + "/Documents/Arduino/libraries";
-#endif
-        public override void OnInspectorGUI()
-            {
-                SetColorAndStyles();
-
-                DrawLogo();
-
-                DrawHeaderTitle("Uduino Setup", defaultPanel, headerColor);
-
-                //EditorGUILayout.HelpBox("Before getting started, you need to set-up Uduino.", MessageType.None);
-                //EditorGUILayout.Space();
-
-                DrawHeaderTitle("1. Add Uduino library in the Arduino folder", defaultPanel, headerColor);
-
-                if (!AssetDatabase.IsValidFolder("Assets/Uduino/Arduino"))
-                {
-                    firstDone = true;
-                    StepDone();
-                }
-
-                if (AssetDatabase.IsValidFolder("Assets/Uduino/Arduino"))
-                {
-
-                    EditorGUILayout.HelpBox("To use Uduino you will need the dedicated Arduino library. Select the Arduino libraries folder to add Uduino library.", MessageType.None, true);
-
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-                EditorGUILayout.HelpBox("The Arduino libraries folder is located under: ~/Documents/Arduino/libraries ", MessageType.Info, true);
-#else
-                    EditorGUILayout.HelpBox("The Arduino libraries folder is most likely located under: C:/Users/"+Environment.UserName+"/Documents/Arduino/libraries", MessageType.Info, true);
 #endif
 
-                    EditorGUILayout.LabelField("Select Arduino libraries Folder");
 
-                    GUILayout.BeginHorizontal();
-
-                    GUILayout.BeginVertical();
-                    destinationFolder = EditorGUILayout.TextField(destinationFolder);
-                    GUILayout.EndVertical();
-                    GUILayout.BeginVertical();
-
-                    if (GUILayout.Button("Select path", GUILayout.ExpandWidth(true)))
-                    {
-                        GUI.FocusControl("");
-                        string path = EditorUtility.OpenFolderPanel("Set Arduino path", destinationFolder, "");
-                        if (path.Length != 0)
-                        {
-                            destinationFolder = path;
-                        }
-                    }
-                    GUILayout.EndVertical();
-
-                    GUILayout.EndHorizontal();
-
-
-                    DrawLine(12, 0, 45);
-                    SetGUIBackgroundColor("#4FC3F7");
-
-                    if (GUILayout.Button("Add Uduino library to Arduino", GUILayout.ExpandWidth(true)))
-                    {
-                        if (destinationFolder == "NOT SET")
-                        {
-                            if (EditorUtility.DisplayDialog("Move library folder", "You have to set a valid folder path", "Ok", "Cancel"))
-                            { }
-                        }
-                        else if (EditorUtility.DisplayDialog("Move library folder", "Are you sure the Arduino libraries folder is " + destinationFolder + " ?", "Move", "Cancel"))
-                        {
-                            MoveArduinoFiles(destinationFolder);
-                        }
-                    }
-                    SetGUIBackgroundColor();
-                }
-
-                EditorGUILayout.Separator();
-
-                DrawHeaderTitle("2. Change project settings", defaultPanel, headerColor);
-                CheckCompatibility();
-
-                EditorGUILayout.Separator();
-
-
-                DrawHeaderTitle("3. Start using Uduino!", defaultPanel, headerColor);
-
-                if (firstDone && secondDone)
-                {
-                    DrawLine(12, 0, 45);
-                    GUILayout.BeginVertical();
-                    SetGUIBackgroundColor("#4FC3F7");
-                    if (GUILayout.Button("I'm ready !"))
-                    {
-                        AddProjectDefine();
-                        AssetDatabase.Refresh();
-                    }
-
-                    GUILayout.EndVertical();
-                    EditorGUILayout.Separator();
-
-                }
-                else
-                {
-                    if (!firstDone)
-                        EditorGUILayout.HelpBox("Add Uduino library into your Arduino folder", MessageType.Warning, true);
-                    if (!secondDone)
-                        EditorGUILayout.HelpBox("Modify the project settings", MessageType.Warning, true);
-
-                    DrawLine(12, 0, 45);
-                    GUILayout.BeginVertical();
-                    GUILayout.BeginHorizontal();
-
-                    if (GUILayout.Button("Skip setup", GUILayout.MaxWidth(90)))
-                    {
-                        AddProjectDefine();
-                        AssetDatabase.Refresh();
-                    }
-                    EditorGUI.BeginDisabledGroup(true);
-                    if (GUILayout.Button("Not ready yet..."))
-                    {
-
-                    }
-                    EditorGUI.EndDisabledGroup();
-
-                    GUILayout.EndHorizontal();
-
-
-                    GUILayout.EndVertical();
-                    EditorGUILayout.Separator();
-
-                }
-
-                EditorGUILayout.Separator();
-            }
-
-            void StepDone()
-            {
-                SetGUIBackgroundColor("#00f908");
-                EditorGUILayout.HelpBox("Step done !", MessageType.Info, true);
-                SetGUIBackgroundColor();
-            }
-
-            void AddProjectDefine()
-            {
-                //TODO : Fix if the build target is changed !
-
-                // Get defines.
-                BuildTargetGroup buildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-                string defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(buildTargetGroup);
-
-                // Append only if not defined already.
-                if (defines.Contains(define))
-                {
-                    Debug.LogWarning("Selected build target (" + EditorUserBuildSettings.activeBuildTarget.ToString() + ") already contains <b>" + define + "</b> <i>Scripting Define Symbol</i>.");
-                    return;
-                }
-                // Append.
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(buildTargetGroup, (defines + ";" + define));
-                Debug.LogWarning("<b>" + define + "</b> added to <i>Scripting Define Symbols</i> for selected build target (" + EditorUserBuildSettings.activeBuildTarget.ToString() + ").");
-            }
-
-            void MoveArduinoFiles(string dest)
-            {
-                string sourceDirectory = Application.dataPath + "/Uduino/Arduino/libraries";
-                string destinationDirectory = FirstToLower(dest);
-                MoveDirectory(sourceDirectory, destinationDirectory);
-                AssetDatabase.Refresh();
-            }
-
-            public static void MoveDirectory(string source, string target)
-            {
-                var stack = new Stack<Folders>();
-                stack.Push(new Folders(source, target));
-
-                while (stack.Count > 0)
-                {
-                    var folders = stack.Pop();
-                    Directory.CreateDirectory(folders.Target);
-                    foreach (var file in Directory.GetFiles(folders.Source, "*.*"))
-                    {
-                        string targetFile = Path.Combine(folders.Target, Path.GetFileName(file));
-                        if (File.Exists(targetFile)) File.Delete(targetFile);
-                        File.Move(file, targetFile);
-                    }
-
-                    foreach (var folder in Directory.GetDirectories(folders.Source))
-                    {
-                        stack.Push(new Folders(folder, Path.Combine(folders.Target, Path.GetFileName(folder))));
-                    }
-                }
-                Directory.Delete(source, true);
-                FileUtil.DeleteFileOrDirectory("Assets/Uduino/Arduino");
-            }
-
-            public class Folders
-            {
-                public string Source { get; private set; }
-                public string Target { get; private set; }
-
-                public Folders(string source, string target)
-                {
-                    Source = source;
-                    Target = target;
-                }
-            }
-
-            public string FirstToLower(string s)
-            {
-                if (string.IsNullOrEmpty(s))
-                    return string.Empty;
-
-                char[] a = s.ToCharArray();
-                a[0] = char.ToLower(a[0]);
-                return new string(a);
-            }
-        }
-#endif
+    }
 }
