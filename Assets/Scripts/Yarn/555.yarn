@@ -1,0 +1,21 @@
+title: Start
+tags:
+position: -84,-36
+---
+App: 你好,我是Narrator. 你是?
+    ->我是你爹
+    ->我是你妈
+    ->我是你儿子
+===
+
+title: Oh
+position: 45,214
+---
+Narrator: Yeah, fun, right?
+===
+
+title: Unity
+position: 214,-19
+---
+Narrator: Someone read the Beginner's Guide!
+===

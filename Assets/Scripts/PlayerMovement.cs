@@ -22,7 +22,8 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        float horizontal = ArduinoController.Instance.GetHorizontalInput();
+        // float horizontal = ArduinoController.Instance.GetHorizontalInput();
+        float horizontal = Input.GetAxisRaw("Horizontal");
         animator.SetBool("isMoving", horizontal != 0);
         moveDirection = new Vector2(horizontal, 0).normalized;
 
