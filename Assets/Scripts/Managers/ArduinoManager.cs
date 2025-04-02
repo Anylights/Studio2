@@ -15,21 +15,40 @@ public class ArduinoController : MonoBehaviour
 
     void Start()
     {
-        UduinoManager.Instance.pinMode(AnalogPin.A2, PinMode.Input);
-        UduinoManager.Instance.pinMode(AnalogPin.A3, PinMode.Input);
+        UduinoManager.Instance.pinMode(2, PinMode.Input_pullup);
+        UduinoManager.Instance.pinMode(3, PinMode.Input_pullup);
+        UduinoManager.Instance.pinMode(8, PinMode.Output);
+        UduinoManager.Instance.pinMode(9, PinMode.Output);
     }
 
     public float GetHorizontalInput()
     {
-        int a2Value = UduinoManager.Instance.analogRead(AnalogPin.A2);
-        int a3Value = UduinoManager.Instance.analogRead(AnalogPin.A3);
+        bool redButtonPressed = (UduinoManager.Instance.digitalRead(2) == 0);
+        bool greenButtonPressed = (UduinoManager.Instance.digitalRead(3) == 0);
 
-        bool redButtonPressed = (a2Value > 250);
-        bool greenButtonPressed = (a3Value > 250);
-
-        if (redButtonPressed && greenButtonPressed) return 0f;
-        else if (redButtonPressed) return -1f;
-        else if (greenButtonPressed) return 1f;
-        else return 0f;
+        if (redButtonPressed && greenButtonPressed)
+        {
+            UduinoManager.Instance.digitalWrite(8, State.LOW);
+            UduinoManager.Instance.digitalWrite(9, State.LOW);
+            return 0f;
+        }
+        else if (redButtonPressed)
+        {
+            UduinoManager.Instance.digitalWrite(8, State.HIGH);
+            UduinoManager.Instance.digitalWrite(9, State.LOW);
+            return -1f;
+        }
+        else if (greenButtonPressed)
+        {
+            UduinoManager.Instance.digitalWrite(8, State.LOW);
+            UduinoManager.Instance.digitalWrite(9, State.HIGH);
+            return 1f;
+        }
+        else
+        {
+            UduinoManager.Instance.digitalWrite(8, State.LOW);
+            UduinoManager.Instance.digitalWrite(9, State.LOW);
+            return 0f;
+        }
     }
 }

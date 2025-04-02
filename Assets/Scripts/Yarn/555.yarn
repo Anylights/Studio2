@@ -1,21 +1,74 @@
 title: Start
 tags:
-position: -84,-36
+position: -165,-269
 ---
-App: 你好,我是Narrator. 你是?
-    ->我是你爹
-    ->我是你妈
-    ->我是你儿子
+Narrator: 欢迎来到这个神奇的世界!
+现在是玩家在说话，
+    -> 我很好奇这是什么地方
+        Narrator: 这是一个充满故事的世界。
+        Narrator: 你准备好开始冒险了吗？
+            -> 当然准备好了
+                <<jump Adventure>>
+            -> 我还需要一点时间
+                Narrator: 没关系,慢慢来。
+                <<jump WaitingRoom>>
+    -> 我想离开
+        <<fade_camera>>
+        Narrator: 现在离开太可惜了...
+        Narrator: 不如先看看这里有什么?
+            -> 好吧,我试试看
+                <<jump Adventure>>
+            -> 不了,我确定要走
+                Narrator: 那好吧,期待与你再次相遇。
+                <<jump End>>
 ===
 
-title: Oh
-position: 45,214
+title: Adventure
+position: 38,-47
 ---
-Narrator: Yeah, fun, right?
+Narrator: 太棒了!让我们开始这段奇妙的旅程吧!
+Narrator: 前方似乎有两条路...
+    -> 选择左边的小径
+        <<jump ForestPath>>
+    -> 选择右边的大道
+        <<jump CityPath>>
 ===
 
-title: Unity
-position: 214,-19
+title: ForestPath
+position: -234,146
 ---
-Narrator: Someone read the Beginner's Guide!
+Narrator: 你走进了一片神秘的森林...
+Narrator: 树叶沙沙作响,空气中弥漫着清新的气息。
+    -> 继续探索
+        <<jump Forest>>
+    -> 返回岔路口
+        <<jump Adventure>>
+===
+
+title: CityPath
+position: 308,-211
+---
+Narrator: 你来到了一座繁华的城市...
+Narrator: 街道上人来人往,充满了生机。
+    -> 在城市闲逛
+        <<jump City>>
+    -> 返回岔路口
+        <<jump Adventure>>
+===
+
+title: WaitingRoom
+position: -28,283
+---
+Narrator: 这里是一个安静的休息室。
+Narrator: 当你准备好了,随时可以开始冒险。
+    -> 我准备好了
+        <<jump Adventure>>
+    -> 再等一下
+        Narrator: 好的,慢慢来。
+===
+
+title: End
+position: 261,105
+---
+Narrator: 感谢你的到来,希望有机会再见。
 ===
