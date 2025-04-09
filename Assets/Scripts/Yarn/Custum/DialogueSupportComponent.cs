@@ -13,6 +13,9 @@ public class DialogueSupportComponent : MonoBehaviour
     // 用于存储已注册的YarnCommand
     private Dictionary<string, Delegate> commandHandlers = new Dictionary<string, Delegate>();
 
+    // 添加一个标志，用于跟踪对话是否已经开始过
+    private bool hasStartedDialogue = false;
+
     void Start()
     {
         runner = FindObjectOfType<MinimalDialogueRunner>();
@@ -23,12 +26,23 @@ public class DialogueSupportComponent : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyUp(KeyCode.Space))
+        // 检查 Arduino 控制器实例是否存在
+        // 以及 runner 是否已经初始化
+        if (runner == null || ArduinoController.Instance == null)
         {
-            if (!runner.isRunning)
-            {
-                runner.StartDialogue();
-            }
+            // 如果 runner 还没找到，尝试再次查找
+            if (runner == null) runner = FindObjectOfType<MinimalDialogueRunner>();
+            // 如果任一实例仍未找到，则返回
+            if (runner == null || ArduinoController.Instance == null) return;
+        }
+
+        // 修改：使用 Arduino 按钮开始对话，但只能使用一次
+        // 检查对话是否未运行，是否未开始过对话，并且按下了红色或绿色按钮
+        if (!runner.isRunning && !hasStartedDialogue && (ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown))
+        {
+            Debug.Log("Arduino button pressed, starting dialogue for the first time.");
+            runner.StartDialogue(); // 默认启动 "Start" 节点
+            hasStartedDialogue = true; // 标记对话已经开始过
         }
     }
 
@@ -57,6 +71,17 @@ public class DialogueSupportComponent : MonoBehaviour
                 // 调用命令处理器
                 handler.DynamicInvoke(parameters);
                 Debug.Log($"Successfully executed command: {commandName}");
+
+                // 特殊处理：如果是play_timeline命令，不在这里继续对话
+                if (commandName != "play_timeline")
+                {
+                    // 在命令执行完毕后继续对话
+                    runner.Continue();
+                }
+                else
+                {
+                    Debug.Log("Timeline命令执行中，不立即继续对话...");
+                }
             }
             catch (Exception e)
             {

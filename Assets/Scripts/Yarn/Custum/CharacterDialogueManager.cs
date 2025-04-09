@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Yarn.Unity;
 using TMPro;
+using Febucci.UI;  // 添加 TextAnimator 命名空间
 
 public class CharacterDialogueManager : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class CharacterDialogueManager : MonoBehaviour
         public GameObject characterObject; // 角色游戏对象
         public GameObject dialogueBox; // 该角色的对话框对象
         public Vector3 offset = new Vector3(0, 2, 0); // 对话框偏移量
+        public bool followCharacter = false; // 此对话框是否应跟随角色
     }
 
     [Header("对话设置")]
@@ -19,18 +21,15 @@ public class CharacterDialogueManager : MonoBehaviour
     [SerializeField] private List<CharacterDialogueInfo> characters = new List<CharacterDialogueInfo>();
 
     [Header("对话效果")]
-    [SerializeField] private float typingSpeed = 0.05f; // 打字效果速度
-    [SerializeField] private bool useTypingEffect = true; // 是否使用打字效果
     [SerializeField] private bool autoAdvanceDialogue = false; // 是否自动推进对话
     [SerializeField] private float dialogueDuration = 3f; // 自动关闭对话的时间
 
     // 当前活跃的对话框
     private GameObject activeDialogue = null;
     private TextMeshProUGUI activeText = null;
-    private Coroutine typingCoroutine = null;
+    private TypewriterByCharacter activeTypewriter = null;  // TextAnimator的打字机组件引用
     private Coroutine dismissCoroutine = null;
     private bool dialogueReady = false; // 对话是否准备好被推进
-    private bool typingInProgress = false; // 是否正在打字中
 
     // 字典用于快速查找角色
     private Dictionary<string, CharacterDialogueInfo> characterMap = new Dictionary<string, CharacterDialogueInfo>();
@@ -57,50 +56,62 @@ public class CharacterDialogueManager : MonoBehaviour
         }
     }
 
-    // 在Update方法中修改空格键检测逻辑
+    // 在Update方法中修改输入检测逻辑
     private void Update()
     {
         // 检查是否有选项界面显示
         bool optionsAreShowing = false;
         var optionsView = FindObjectOfType<MinimalOptionsView>();
-        if (optionsView != null)
+        if (optionsView != null && optionsView.IsShowingOptions())
         {
-            // 检查选项界面是否激活
-            CanvasGroup optionsCanvasGroup = optionsView.GetComponent<CanvasGroup>();
-            if (optionsCanvasGroup != null && optionsCanvasGroup.alpha > 0)
-            {
-                optionsAreShowing = true;
-            }
+            optionsAreShowing = true;
         }
 
-        // 只有在没有选项界面显示且对话准备好的情况下，空格键才有效
-        if (Input.GetKeyDown(KeyCode.Space) && dialogueReady && !optionsAreShowing)
+        // 检查是否有Timeline在播放
+        bool timelinePlaying = false;
+        if (TimeLineManager.Instance != null && TimeLineManager.Instance.IsAnyPlaying())
         {
-            // 如果正在打字，则先完成打字
-            if (typingInProgress)
-            {
-                CompleteTyping();
-            }
-            else
-            {
-                ContinueDialogue();
-            }
+            timelinePlaying = true;
         }
 
-        // 更新所有活跃对话框的位置
+        // 检查文本是否正在动画中显示
+        bool textAnimating = false;
+        if (activeTypewriter != null && activeTypewriter.isShowingText)
+        {
+            textAnimating = true;
+        }
+        else if (activeTypewriter != null && !activeTypewriter.isShowingText && activeDialogue != null)
+        {
+            // 如果文本显示完成，设置对话为准备好状态
+            dialogueReady = true;
+        }
+
+        // 检查Arduino控制器是否可用
+        bool arduinoInputAvailable = ArduinoController.Instance != null;
+        bool arduinoButtonPressed = false;
+        if (arduinoInputAvailable)
+        {
+            arduinoButtonPressed = ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown;
+        }
+
+        // 只有在对话准备好且没有选项显示、没有Timeline播放、文本不在动画中的情况下，输入才有效
+        if (dialogueReady && !optionsAreShowing && !timelinePlaying && !textAnimating &&
+            (Input.GetKeyDown(KeyCode.Space) || arduinoButtonPressed))
+        {
+            ContinueDialogue();
+        }
+
+        // 更新所有活跃对话框的位置(如果设置了跟随)
         UpdateDialoguePositions();
     }
 
-
     // 处理新的对话行
-    // 修改OnLinePresentation方法
     public void OnLinePresentation(LocalizedLine dialogueLine)
     {
         // 停止任何正在进行的对话
         StopAllCoroutines();
         HideAllDialogues();
         dialogueReady = false;
-        typingInProgress = false;
 
         string characterName = dialogueLine.CharacterName?.ToLower();
 
@@ -118,10 +129,17 @@ public class CharacterDialogueManager : MonoBehaviour
         }
     }
 
-    // 修改ShowDialogue方法，确保对话框可见
+    // 修改ShowDialogue方法，确保对话框可见并使用TextAnimator
     private void ShowDialogue(GameObject dialogueBox, string text, CharacterDialogueInfo character = null)
     {
         if (dialogueBox == null) return;
+
+        // 先清除当前活跃对话框的文本
+        if (activeText != null)
+        {
+            activeText.text = "";
+            activeText.ClearMesh(true);
+        }
 
         activeDialogue = dialogueBox;
         dialogueBox.SetActive(true);
@@ -139,66 +157,35 @@ public class CharacterDialogueManager : MonoBehaviour
         activeText = dialogueBox.GetComponentInChildren<TextMeshProUGUI>();
         if (activeText == null) return;
 
-        // 设置文本
-        if (useTypingEffect)
+        // 确保文本为空并清除网格
+        activeText.text = "";
+        activeText.ClearMesh(true);
+
+        // 查找TypewriterByCharacter组件
+        activeTypewriter = dialogueBox.GetComponentInChildren<TypewriterByCharacter>();
+        if (activeTypewriter == null)
         {
-            activeText.text = "";
-            typingInProgress = true;
-            typingCoroutine = StartCoroutine(TypeText(activeText, text));
+            Debug.LogWarning($"对话框 {dialogueBox.name} 上没有找到 TypewriterByCharacter 组件，将直接显示文本。");
+            activeText.text = text;
+            dialogueReady = true;  // 直接标记为准备好
         }
         else
         {
-            activeText.text = text;
-            typingInProgress = false;
-            OnTypingComplete();
+            // 使用TextAnimator显示文本
+            activeTypewriter.ShowText(text);
         }
 
-        // 如果是角色对话框，立即更新位置
-        if (character != null && character.characterObject != null)
+        // 如果是角色对话框并且设置了跟随，立即更新位置
+        if (character != null && character.characterObject != null && character.followCharacter)
         {
             UpdateDialoguePosition(dialogueBox, character.characterObject, character.offset);
         }
-
-        // 添加调试日志
-        Debug.Log($"显示对话框: {dialogueBox.name}, 文本: {text}, CanvasGroup: {(canvasGroup ? canvasGroup.alpha.ToString() : "无")}");
     }
 
-    // 打字效果协程
-    private System.Collections.IEnumerator TypeText(TextMeshProUGUI textComponent, string fullText)
+    // 当TextAnimator完成文本动画时调用
+    private void OnTypewriterComplete()
     {
-        textComponent.text = "";
-        foreach (char letter in fullText.ToCharArray())
-        {
-            textComponent.text += letter;
-            yield return new WaitForSeconds(typingSpeed);
-        }
-
-        typingInProgress = false;
-        OnTypingComplete();
-    }
-
-    // 完成打字过程
-    private void CompleteTyping()
-    {
-        if (typingCoroutine != null)
-        {
-            StopCoroutine(typingCoroutine);
-            typingCoroutine = null;
-        }
-
-        if (activeText != null)
-        {
-            string fullText = activeText.text;
-            activeText.text = fullText;
-        }
-
-        typingInProgress = false;
-        OnTypingComplete();
-    }
-
-    // 打字效果完成后的处理
-    private void OnTypingComplete()
-    {
+        // 文本完全显示后，标记对话准备好继续
         dialogueReady = true;
 
         // 如果设置了自动推进，则启动自动关闭计时器
@@ -220,7 +207,6 @@ public class CharacterDialogueManager : MonoBehaviour
             ContinueDialogue();
     }
 
-    // 更新对话框位置
     // 更新对话框位置
     private void UpdateDialoguePosition(GameObject dialogueBox, GameObject character, Vector3 offset)
     {
@@ -256,7 +242,8 @@ public class CharacterDialogueManager : MonoBehaviour
     {
         foreach (var character in characters)
         {
-            if (character.dialogueBox != null && character.dialogueBox.activeSelf && character.characterObject != null)
+            // 检查对话框是否激活，是否有角色对象，以及是否设置了跟随
+            if (character.dialogueBox != null && character.dialogueBox.activeSelf && character.characterObject != null && character.followCharacter)
             {
                 UpdateDialoguePosition(character.dialogueBox, character.characterObject, character.offset);
             }
@@ -264,15 +251,43 @@ public class CharacterDialogueManager : MonoBehaviour
     }
 
     // 隐藏所有对话框
-    private void HideAllDialogues()
+    public void HideAllDialogues()
     {
+        // 清除当前活跃对话框的文本
+        if (activeText != null)
+        {
+            activeText.text = "";
+            activeText.ClearMesh(true);
+        }
+
+        // 重置状态
+        activeText = null;
+        activeTypewriter = null;
+        dialogueReady = false;
+
         if (defaultDialogueBox != null)
+        {
+            var defaultText = defaultDialogueBox.GetComponentInChildren<TextMeshProUGUI>();
+            if (defaultText != null)
+            {
+                defaultText.text = "";
+                defaultText.ClearMesh(true);
+            }
             defaultDialogueBox.SetActive(false);
+        }
 
         foreach (var character in characters)
         {
             if (character.dialogueBox != null)
+            {
+                var characterText = character.dialogueBox.GetComponentInChildren<TextMeshProUGUI>();
+                if (characterText != null)
+                {
+                    characterText.text = "";
+                    characterText.ClearMesh(true);
+                }
                 character.dialogueBox.SetActive(false);
+            }
         }
     }
 

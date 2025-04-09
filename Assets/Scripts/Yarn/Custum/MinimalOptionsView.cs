@@ -65,7 +65,6 @@ public class MinimalOptionsView : MonoBehaviour
                 if (canvasGroup == null)
                 {
                     canvasGroup = uiObject.AddComponent<CanvasGroup>();
-                    Debug.Log($"为选项UI {uiObject.name} 自动添加了CanvasGroup组件");
                 }
                 optionCanvasGroups.Add(canvasGroup);
 
@@ -83,21 +82,24 @@ public class MinimalOptionsView : MonoBehaviour
     private void Update()
     {
         if (!optionsActive) return;
-
-        // 检测数字键1-9按下事件
-        for (int i = 0; i < 9; i++)
+        // 检查 Arduino 控制器实例是否存在
+        if (ArduinoController.Instance == null)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1 + i) || Input.GetKeyDown(KeyCode.Keypad1 + i))
-            {
-                int optionIndex = i; // 0-8对应键盘1-9
+            return;
+        }
 
-                if (optionIndex < availableOptionIndices.Count)
-                {
-                    // 选择对应选项
-                    SelectOption(availableOptionIndices[optionIndex]);
-                }
-                break;
-            }
+        // 检测 Arduino 按钮按下事件
+        // 按下红色按钮 (Pin 2) - 始终选择显示的第一个选项（无论是否可用）
+        if (ArduinoController.Instance.RedButtonDown && currentOptions.Length > 0)
+        {
+            // 选择第一个选项（索引0）
+            SelectOption(0);
+        }
+        // 按下绿色按钮 (Pin 3) - 始终选择显示的第二个选项（无论是否可用）
+        else if (ArduinoController.Instance.GreenButtonDown && currentOptions.Length > 1)
+        {
+            // 选择第二个选项（索引1）
+            SelectOption(1);
         }
     }
 
@@ -115,42 +117,45 @@ public class MinimalOptionsView : MonoBehaviour
         // 隐藏所有选项UI
         HideAllOptions(false); // 立即隐藏，不使用淡出效果
 
-        // 为每个可用选项设置UI
+        // 为每个选项设置UI
         int availableCount = 0;
         List<int> uiIndices = new List<int>(); // 记录需要显示的UI索引
 
         for (int i = 0; i < options.Length; i++)
         {
-            if (!options[i].IsAvailable) continue;
+            GameObject optionUI = optionUIObjects[availableCount];
+            TextMeshProUGUI textComponent = optionTextComponents[availableCount];
 
-            if (availableCount < optionUIObjects.Count)
+            if (optionUI != null && textComponent != null)
             {
-                GameObject optionUI = optionUIObjects[availableCount];
-                TextMeshProUGUI textComponent = optionTextComponents[availableCount];
+                // 准备选项UI
+                optionUI.SetActive(true);
 
-                if (optionUI != null && textComponent != null)
+                // 设置选项文本
+                textComponent.text = options[i].Line.TextWithoutCharacterName.Text;
+
+                // 初始化CanvasGroup
+                CanvasGroup canvasGroup = optionCanvasGroups[availableCount];
+                if (canvasGroup != null)
                 {
-                    // 准备选项UI
-                    optionUI.SetActive(true);
-
-                    // 设置选项文本
-                    textComponent.text = options[i].Line.TextWithoutCharacterName.Text;
-
-                    // 初始化CanvasGroup
-                    CanvasGroup canvasGroup = optionCanvasGroups[availableCount];
-                    if (canvasGroup != null)
-                    {
-                        canvasGroup.alpha = 0f;
-                        canvasGroup.interactable = true;
-                        canvasGroup.blocksRaycasts = true;
-                    }
-
-                    // 记录可用选项索引
-                    availableOptionIndices.Add(i);
-                    uiIndices.Add(availableCount);
-
-                    availableCount++;
+                    canvasGroup.alpha = 0f;
+                    canvasGroup.interactable = options[i].IsAvailable;
+                    canvasGroup.blocksRaycasts = options[i].IsAvailable;
                 }
+
+                // 如果选项不可用，应用划线样式
+                if (!options[i].IsAvailable)
+                {
+                    textComponent.fontStyle = FontStyles.Strikethrough;
+                }
+                else
+                {
+                    textComponent.fontStyle = FontStyles.Normal;
+                    availableOptionIndices.Add(i);
+                }
+
+                uiIndices.Add(availableCount);
+                availableCount++;
             }
             else
             {
@@ -276,10 +281,13 @@ public class MinimalOptionsView : MonoBehaviour
     // 选择指定索引的选项
     private void SelectOption(int optionIndex)
     {
-        if (optionIndex >= 0 && optionIndex < currentOptions.Length && currentOptions[optionIndex].IsAvailable)
+        if (optionIndex >= 0 && optionIndex < currentOptions.Length)
         {
-            optionsActive = false;
-            StartCoroutine(SelectOptionWithFade(optionIndex));
+            if (currentOptions[optionIndex].IsAvailable)
+            {
+                optionsActive = false;
+                StartCoroutine(SelectOptionWithFade(optionIndex));
+            }
         }
     }
 
@@ -291,5 +299,11 @@ public class MinimalOptionsView : MonoBehaviour
 
         // 设置选中的选项
         runner.SetSelectedOption(currentOptions[optionIndex].DialogueOptionID);
+    }
+
+    // 添加一个公共方法，供其他脚本检查选项是否正在显示
+    public bool IsShowingOptions()
+    {
+        return optionsActive;
     }
 }
