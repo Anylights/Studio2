@@ -1,10 +1,15 @@
-// Uduino Default Board
 #include<Uduino.h>
 #include <Adafruit_NeoPixel.h>
 
-#define LED_PIN    10      // 灯环信号引脚
-#define LED_COUNT  12      // 灯珠数量
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+// 定义两个灯带的引脚和参数
+#define LED_PIN_1    10      // 第一个灯带信号引脚
+#define LED_PIN_2    11      // 第二个灯带信号引脚
+#define LED_COUNT    52      // 每个灯带的灯珠数量
+
+// 创建两个灯带对象
+Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(LED_COUNT, LED_PIN_1, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip2 = Adafruit_NeoPixel(LED_COUNT, LED_PIN_2, NEO_GRB + NEO_KHZ800);
+
 
 Uduino uduino("uduinoBoard"); // Declare and name your object
 
@@ -17,9 +22,10 @@ void setup()
 {
   Serial.begin(9600);
 
-  strip.begin();
-  // strip.setBrightness(50);  // 亮度设为50%（避免过亮）
-  strip.show();
+  strip1.begin();
+  strip2.begin();
+  strip1.show();
+  strip2.show();
 
 #if defined (__AVR_ATmega32U4__) // Leonardo
   while (!Serial) {}
@@ -36,7 +42,11 @@ void setup()
   uduino.addCommand("b", ReadBundle);
   uduino.addInitFunction(DisconnectAllServos);
   uduino.addDisconnectedFunction(DisconnectAllServos);
-  uduino.addCommand("SetColor", Set_Color);
+  uduino.addCommand("SetColor", SetColor);           // 设置所有灯带相同颜色
+  uduino.addCommand("SetStripColor", SetStripColor);     // 设置指定灯带的颜色
+  uduino.addCommand("SetPixelColor", SetPixelColor);     // 设置指定灯带指定灯珠的颜色
+
+  uduino.addDisconnectedFunction(uduinoDisconnect);
 }
 
 void ReadBundle() {
@@ -185,8 +195,12 @@ void printValue(int pin, int targetValue) {
   // TODO : Here we could put bundle read multiple pins if(Bundle) { ... add delimiter // } ...
 }
 
-
-
+void finalize() {
+  strip1.clear();
+  strip2.clear();
+  strip1.show();
+  strip2.show();
+}
 
 /* SERVO CODE */
 Servo servos[MAXSERVOS];
@@ -246,19 +260,93 @@ void DisconnectAllServos() {
   }
 }
 
-void Set_Color() {
-  char* arg = NULL; // 添加这行声明
-  arg = uduino.next();
-  int r = (arg != NULL) ? atoi(arg) : 0;
-  
-  arg = uduino.next();
-  int g = (arg != NULL) ? atoi(arg) : 0;
-  
-  arg = uduino.next();
-  int b = (arg != NULL) ? atoi(arg) : 0;
-  
-  for (int i = 0; i < LED_COUNT; i++) {
-      strip.setPixelColor(i, r, g, b);
+// 设置所有灯带为相同颜色
+void SetColor() {
+    char* arg = NULL;
+    arg = uduino.next();
+    int r = (arg != NULL) ? atoi(arg) : 0;
+    
+    arg = uduino.next();
+    int g = (arg != NULL) ? atoi(arg) : 0;
+    
+    arg = uduino.next();
+    int b = (arg != NULL) ? atoi(arg) : 0;
+    
+    // 设置两个灯带的所有灯珠
+    for (int i = 0; i < LED_COUNT; i++) {
+        strip1.setPixelColor(i, r, g, b);
+        strip2.setPixelColor(i, r, g, b);
+    }
+    strip1.show();
+    strip2.show();
+}
+
+// 设置指定灯带的颜色
+void SetStripColor() {
+    char* arg = NULL;
+    
+    // 获取灯带编号（1或2）
+    arg = uduino.next();
+    int stripNum = (arg != NULL) ? atoi(arg) : 1;
+    
+    // 获取RGB值
+    arg = uduino.next();
+    int r = (arg != NULL) ? atoi(arg) : 0;
+    
+    arg = uduino.next();
+    int g = (arg != NULL) ? atoi(arg) : 0;
+    
+    arg = uduino.next();
+    int b = (arg != NULL) ? atoi(arg) : 0;
+    
+    // 选择对应的灯带设置颜色
+    Adafruit_NeoPixel& strip = (stripNum == 2) ? strip2 : strip1;
+    
+    for (int i = 0; i < LED_COUNT; i++) {
+        strip.setPixelColor(i, r, g, b);
     }
     strip.show();
+}
+
+// 设置指定灯带指定灯珠的颜色
+void SetPixelColor() {
+    char* arg = NULL;
+    
+    // 获取灯带编号（1或2）
+    arg = uduino.next();
+    int stripNum = (arg != NULL) ? atoi(arg) : 1;
+    
+    // 获取灯珠编号（0-51）
+    arg = uduino.next();
+    int pixelNum = (arg != NULL) ? atoi(arg) : 0;
+    
+    // 获取RGB值
+    arg = uduino.next();
+    int r = (arg != NULL) ? atoi(arg) : 0;
+    
+    arg = uduino.next();
+    int g = (arg != NULL) ? atoi(arg) : 0;
+    
+    arg = uduino.next();
+    int b = (arg != NULL) ? atoi(arg) : 0;
+    
+    // 选择对应的灯带
+    Adafruit_NeoPixel& strip = (stripNum == 2) ? strip2 : strip1;
+    
+    // 设置指定灯珠的颜色
+    if (pixelNum >= 0 && pixelNum < LED_COUNT) {
+        strip.setPixelColor(pixelNum, r, g, b);
+        strip.show();
+    }
+}
+
+void uduinoDisconnect() {
+  // 断开连接时强制关闭所有灯带
+  for (int i = 0; i < LED_COUNT; i++) {
+    strip1.setPixelColor(i, 0, 0, 0);
+    strip2.setPixelColor(i, 0, 0, 0);
+  }
+  strip1.show();
+  strip2.show();
+  Serial.println("连接断开，已关闭所有灯带");
 }

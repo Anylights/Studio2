@@ -27,6 +27,9 @@ public class MinimalOptionsView : MonoBehaviour
 
     private bool optionsActive = false;  // 选项是否激活中
 
+    public event System.Action OnOptionsShown;
+    public event System.Action OnOptionsHidden;
+
     public void Start()
     {
         runner = FindObjectOfType<MinimalDialogueRunner>();
@@ -113,6 +116,9 @@ public class MinimalOptionsView : MonoBehaviour
         currentOptions = options;
         availableOptionIndices.Clear();
         optionsActive = true;
+
+        // 触发选项显示事件
+        OnOptionsShown?.Invoke();
 
         // 隐藏所有选项UI
         HideAllOptions(false); // 立即隐藏，不使用淡出效果
@@ -294,6 +300,9 @@ public class MinimalOptionsView : MonoBehaviour
     // 带淡出效果的选择选项
     private IEnumerator SelectOptionWithFade(int optionIndex)
     {
+        // 先触发选项隐藏事件
+        OnOptionsHidden?.Invoke();
+
         // 先淡出所有选项
         yield return StartCoroutine(FadeOutAllOptions());
 
@@ -305,5 +314,17 @@ public class MinimalOptionsView : MonoBehaviour
     public bool IsShowingOptions()
     {
         return optionsActive;
+    }
+
+    public void HandleExternalButtonPress(int buttonIndex)
+    {
+        if (!optionsActive) return;
+
+        // 确保索引有效
+        if (buttonIndex >= 0 && buttonIndex < currentOptions.Length)
+        {
+            Debug.Log($"外部按钮按下，选择选项：{buttonIndex}");
+            SelectOption(buttonIndex);
+        }
     }
 }

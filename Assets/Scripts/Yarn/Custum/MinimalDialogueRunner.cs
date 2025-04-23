@@ -13,6 +13,9 @@ public class MinimalDialogueRunner : MonoBehaviour
 
     public bool isRunning { get; internal set; } = false;
 
+    // 添加当前节点属性
+    public string CurrentNodeName { get; private set; } = "";
+
     private Yarn.Dialogue dialogue;
 
     public void StartDialogue(string nodeName = "Start")
@@ -22,6 +25,10 @@ public class MinimalDialogueRunner : MonoBehaviour
             Debug.LogWarning("Can't start a dialogue that is already running");
             return;
         }
+
+        // 记录当前节点
+        CurrentNodeName = nodeName;
+
         isRunning = true;
         dialogue.SetNode(nodeName);
         dialogue.Continue();
@@ -91,6 +98,9 @@ public class MinimalDialogueRunner : MonoBehaviour
     }
     private void HandleNodeStarted(string nodeName)
     {
+        // 记录当前节点
+        CurrentNodeName = nodeName;
+
         NodeStarted?.Invoke(nodeName);
     }
     private void HandleNodeEnded(string nodeName)
@@ -183,5 +193,31 @@ public class MinimalDialogueRunner : MonoBehaviour
             PrepareForLinesHandler = PrepareForLines
         };
         return dialogue;
+    }
+
+    // 添加一个YarnCommand，用于从脚本中跳转到指定节点
+    [YarnCommand("jump_to_node")]
+    public void JumpToNode(string nodeName)
+    {
+        if (string.IsNullOrEmpty(nodeName))
+        {
+            Debug.LogWarning("无法跳转到空节点名");
+            return;
+        }
+
+        if (!NodeExists(nodeName))
+        {
+            Debug.LogWarning($"节点 '{nodeName}' 不存在");
+            return;
+        }
+
+        // 如果当前正在运行对话，先停止
+        if (isRunning)
+        {
+            StopDialogue();
+        }
+
+        // 跳转到指定节点
+        StartDialogue(nodeName);
     }
 }

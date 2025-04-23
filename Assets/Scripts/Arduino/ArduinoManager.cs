@@ -37,55 +37,31 @@ public class ArduinoController : MonoBehaviour
     {
         UduinoManager.Instance.pinMode(2, PinMode.Input_pullup);
         UduinoManager.Instance.pinMode(3, PinMode.Input_pullup);
-        UduinoManager.Instance.pinMode(8, PinMode.Output);
-        UduinoManager.Instance.pinMode(9, PinMode.Output);
+        Debug.Log("按钮引脚初始化完成");
     }
 
     // 在 Update 中读取输入并检测状态变化
     void Update()
     {
+        // 添加调试日志
         // 读取当前状态 (0 表示按下)
         currentRedState = UduinoManager.Instance.digitalRead(2);
         currentGreenState = UduinoManager.Instance.digitalRead(3);
 
-        // 检测是否从“未按下”变为“按下”
+        // 检测是否从"未按下"变为"按下"
         RedButtonDown = (previousRedState != 0 && currentRedState == 0);
         GreenButtonDown = (previousGreenState != 0 && currentGreenState == 0);
+
+        // 添加调试日志
+        if (RedButtonDown || GreenButtonDown)
+        {
+            Debug.Log($"按钮状态: Red={currentRedState}, Green={currentGreenState}");
+            Debug.Log($"按钮按下: Red={RedButtonDown}, Green={GreenButtonDown}");
+        }
 
         // 更新上一帧状态
         previousRedState = currentRedState;
         previousGreenState = currentGreenState;
-
-        // （可选）根据需要更新 LED 灯等，可以移到 GetHorizontalInput 或其他地方
-        UpdateLEDs();
-    }
-
-    // 将 LED 更新逻辑提取出来
-    void UpdateLEDs()
-    {
-        bool redPressed = (currentRedState == 0);
-        bool greenPressed = (currentGreenState == 0);
-
-        if (redPressed && greenPressed)
-        {
-            UduinoManager.Instance.digitalWrite(8, State.LOW);
-            UduinoManager.Instance.digitalWrite(9, State.LOW);
-        }
-        else if (redPressed)
-        {
-            UduinoManager.Instance.digitalWrite(8, State.HIGH);
-            UduinoManager.Instance.digitalWrite(9, State.LOW);
-        }
-        else if (greenPressed)
-        {
-            UduinoManager.Instance.digitalWrite(8, State.LOW);
-            UduinoManager.Instance.digitalWrite(9, State.HIGH);
-        }
-        else
-        {
-            UduinoManager.Instance.digitalWrite(8, State.LOW);
-            UduinoManager.Instance.digitalWrite(9, State.LOW);
-        }
     }
 
 
