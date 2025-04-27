@@ -9,11 +9,6 @@ public class RgbController : MonoBehaviour
     [Header("调试选项")]
     [SerializeField] private bool enableDebugLogs = true;
 
-    [Header("灯带对话选项设置")]
-    [SerializeField] private Color optionStrip1Color = Color.red;   // 显示对话选项时灯带1的颜色
-    [SerializeField] private Color optionStrip2Color = Color.green; // 显示对话选项时灯带2的颜色
-    [SerializeField] private Color defaultColor = Color.white;      // 默认灯带颜色
-
     // 检查Uduino管理器是否可用
     private bool IsUduinoAvailable => UduinoManager.Instance != null;
 
@@ -29,54 +24,6 @@ public class RgbController : MonoBehaviour
     {
         // 延迟一秒再设置颜色，确保Uduino已初始化
         StartCoroutine(DelayedStart());
-
-        // 查找并订阅MinimalOptionsView事件
-        MinimalOptionsView optionsView = FindObjectOfType<MinimalOptionsView>();
-        if (optionsView != null)
-        {
-            optionsView.OnOptionsShown += OnDialogueOptionsShown;
-            optionsView.OnOptionsHidden += OnDialogueOptionsHidden;
-
-            if (enableDebugLogs)
-                Debug.Log("已成功订阅对话选项事件");
-        }
-        else
-        {
-            Debug.LogWarning("未找到MinimalOptionsView，灯带将无法对对话选项作出响应");
-        }
-    }
-
-    private void OnDestroy()
-    {
-        // 取消事件订阅，防止内存泄漏
-        MinimalOptionsView optionsView = FindObjectOfType<MinimalOptionsView>();
-        if (optionsView != null)
-        {
-            optionsView.OnOptionsShown -= OnDialogueOptionsShown;
-            optionsView.OnOptionsHidden -= OnDialogueOptionsHidden;
-        }
-
-        // 关闭灯带
-        TurnOffLights();
-    }
-
-    // 当显示对话选项时调用
-    private void OnDialogueOptionsShown()
-    {
-        if (enableDebugLogs)
-            Debug.Log("检测到对话选项显示，设置灯带颜色");
-
-        SetStripColor(0, optionStrip1Color); // 灯带1设为红色
-        SetStripColor(1, optionStrip2Color); // 灯带2设为绿色
-    }
-
-    // 当隐藏对话选项时调用
-    private void OnDialogueOptionsHidden()
-    {
-        if (enableDebugLogs)
-            Debug.Log("检测到对话选项隐藏，恢复灯带颜色");
-
-        SetWhiteColor(); // 恢复为白色
     }
 
     private IEnumerator DelayedStart()
@@ -125,25 +72,7 @@ public class RgbController : MonoBehaviour
     // 设置两条灯带为白色
     public void SetWhiteColor()
     {
-        SetColor(defaultColor);
-    }
-
-    // 关闭所有灯带
-    public void TurnOffLights()
-    {
-        if (!IsUduinoAvailable) return;
-
-        try
-        {
-            SetColor(Color.black);
-
-            if (enableDebugLogs)
-                Debug.Log("灯带已关闭");
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"关闭灯带时出错: {e.Message}");
-        }
+        SetColor(Color.white);
     }
 
     // 提供公共方法以供其他脚本调用
@@ -231,4 +160,5 @@ public class RgbController : MonoBehaviour
             Debug.LogError($"设置像素颜色时出错: {e.Message}");
         }
     }
+
 }
