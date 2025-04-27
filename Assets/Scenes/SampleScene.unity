@@ -382,6 +382,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enableDebugLogs: 1
+  optionStrip1Color: {r: 1, g: 0, b: 0, a: 1}
+  optionStrip2Color: {r: 0, g: 1, b: 0, a: 1}
+  defaultColor: {r: 0.37425336, g: 0.6658315, b: 0.7987421, a: 1}
 --- !u!4 &374290228
 Transform:
   m_ObjectHideFlags: 0
@@ -7561,23 +7564,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af3e84404cbeeb642ad615a639bb5916, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  strips:
-  - stripID: 0
-    pin: 10
-    numPixels: 12
-  - stripID: 0
-    pin: 10
-    numPixels: 12
-  - stripID: 0
-    pin: 10
-    numPixels: 12
-  TargetColor:
-    r: 1
-    g: 0.7127472
-    b: 0
-    a: 1
-  brightness: 128
-  sequenceStarted: 0
 --- !u!4 &1672915263
 Transform:
   m_ObjectHideFlags: 0

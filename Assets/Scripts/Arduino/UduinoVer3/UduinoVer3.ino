@@ -10,17 +10,15 @@
 Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(LED_COUNT, LED_PIN_1, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel strip2 = Adafruit_NeoPixel(LED_COUNT, LED_PIN_2, NEO_GRB + NEO_KHZ800);
 
-
 Uduino uduino("uduinoBoard"); // Declare and name your object
 
 // Servo
 #include <Servo.h>
 #define MAXSERVOS 8
 
-
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   strip1.begin();
   strip2.begin();
