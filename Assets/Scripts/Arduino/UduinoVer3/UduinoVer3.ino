@@ -20,7 +20,7 @@ Uduino uduino("uduinoBoard"); // Declare and name your object
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   strip1.begin();
   strip2.begin();
