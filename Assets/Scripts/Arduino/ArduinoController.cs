@@ -43,7 +43,6 @@ public class ArduinoController : MonoBehaviour
     // 在 Update 中读取输入并检测状态变化
     void Update()
     {
-        // 添加调试日志
         // 读取当前状态 (0 表示按下)
         currentRedState = UduinoManager.Instance.digitalRead(2);
         currentGreenState = UduinoManager.Instance.digitalRead(3);

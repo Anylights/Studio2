@@ -81,10 +81,24 @@ public class MinimalOptionsView : MonoBehaviour
             }
         }
     }
-
     private void Update()
     {
         if (!optionsActive) return;
+
+        // 检查键盘输入
+        if (Input.GetKeyDown(KeyCode.Alpha1) && currentOptions.Length > 0)
+        {
+            // 选择第一个选项（索引0）
+            SelectOption(0);
+            return;
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha2) && currentOptions.Length > 1)
+        {
+            // 选择第二个选项（索引1）
+            SelectOption(1);
+            return;
+        }
+
         // 检查 Arduino 控制器实例是否存在
         if (ArduinoController.Instance == null)
         {
@@ -287,6 +301,10 @@ public class MinimalOptionsView : MonoBehaviour
     // 选择指定索引的选项
     private void SelectOption(int optionIndex)
     {
+        // 先触发选项隐藏事件
+
+        EventCenter.Instance.TriggerEvent<int>("optionSelected", optionIndex);
+
         if (optionIndex >= 0 && optionIndex < currentOptions.Length)
         {
             if (currentOptions[optionIndex].IsAvailable)
@@ -300,8 +318,6 @@ public class MinimalOptionsView : MonoBehaviour
     // 带淡出效果的选择选项
     private IEnumerator SelectOptionWithFade(int optionIndex)
     {
-        // 先触发选项隐藏事件
-        OnOptionsHidden?.Invoke();
 
         // 先淡出所有选项
         yield return StartCoroutine(FadeOutAllOptions());

@@ -113,11 +113,12 @@ public class SaveSystem : MonoBehaviour
         bool hasSave = File.Exists(saveFilePath);
         variableStorage.SetValue("$has_save", hasSave);
 
-        // 自动加载存档（如果存在）
-        if (hasSave)
-        {
-            LoadGame();
-        }
+        // // 自动加载存档（如果存在）
+        // if (hasSave)
+        // {
+        //     LoadGame();
+        // }
+        ResetGame(); // 重置游戏，确保从初始状态开始
 
         // 订阅节点完成事件，用于自动保存
         dialogueRunner.NodeEnded.AddListener(AutoSave);

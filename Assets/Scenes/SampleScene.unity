@@ -251,11 +251,11 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 0d030a37a4c47b44992ea5b90e836c95, type: 3}
+  m_audioClip: {fileID: 8300000, guid: 100d03e93ffa8df4991bafe4757fc5cb, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.905
+  m_Volume: 0.778
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -361,7 +361,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 374290228}
-  - component: {fileID: 374290227}
+  - component: {fileID: 374290229}
   m_Layer: 0
   m_Name: RGBController
   m_TagString: Untagged
@@ -369,28 +369,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &374290227
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 374290226}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01a20abd3d9964246831f4742b954f99, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  enableDebugLogs: 1
-  breathCycleTime: 4000
-  minBrightness: 20
-  maxBrightness: 150
-  pulseDuration: 500
-  pulseWidth: 5
-  pulseMaxBrightness: 200
-  defaultColor: {r: 0.066037595, g: 0.6777876, b: 1, a: 1}
-  optionStrip1Color: {r: 1, g: 0, b: 0, a: 1}
-  optionStrip2Color: {r: 0, g: 1, b: 0, a: 1}
 --- !u!4 &374290228
 Transform:
   m_ObjectHideFlags: 0
@@ -402,6 +380,108 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -5.033842, y: 0.8856986, z: 0.49033454}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &374290229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 374290226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff96e39c23094b546846520a8241258d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDebugLogs: 1
+  optionStrip1Color: {r: 1, g: 0, b: 0, a: 1}
+  optionStrip2Color: {r: 0, g: 1, b: 0, a: 1}
+  defaultColor: {r: 0.5471698, g: 0.5471698, b: 0.5471698, a: 1}
+  pulseEffectDuration: 0.5
+  pulseTailLength: 5
+--- !u!1 &450063162
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 450063164}
+  - component: {fileID: 450063163}
+  m_Layer: 0
+  m_Name: "\u60AC\u6D6E\u4E3B\u89D2"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!212 &450063163
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450063162}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 1
+  m_Sprite: {fileID: -687697633, guid: 0a809923dfe52b74d96509b2da14bfb9, type: 3}
+  m_Color: {r: 0.6773585, g: 1, b: 0.99118006, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.34, y: 0.7}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!4 &450063164
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450063162}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.491, y: -1.062, z: 0}
+  m_LocalScale: {x: 1.7776428, y: 1.7776428, z: 1.7776428}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -691,7 +771,7 @@ MonoBehaviour:
   interruptPreviousSound: 1
   randomSequence: 0
   sounds:
-  - {fileID: 8300000, guid: 27be0fc570c61ad4b8c2f9a60fb87896, type: 3}
+  - {fileID: 8300000, guid: 4824db11d17478a48b6089557bbe34c2, type: 3}
 --- !u!114 &462325650
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1046,7 +1126,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 114023058375386772, guid: bb5e6aea88a650f4a8317e74940b0ea4, type: 3}
       propertyPath: baudRate
-      value: 9600
+      value: 115200
       objectReference: {fileID: 0}
     - target: {fileID: 114023058375386772, guid: bb5e6aea88a650f4a8317e74940b0ea4, type: 3}
       propertyPath: ManagerState
@@ -1364,7 +1444,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 0
   m_FalloffIntensity: 0.5
   m_Color: {r: 0.88113207, g: 1, b: 0.99197507, a: 1}
-  m_Intensity: 1.12
+  m_Intensity: 1.1
   m_LightVolumeIntensity: 1
   m_LightVolumeIntensityEnabled: 0
   m_ApplyToSortingLayers: 0b2698eb00000000
@@ -2030,7 +2110,7 @@ MonoBehaviour:
   interruptPreviousSound: 1
   randomSequence: 0
   sounds:
-  - {fileID: 8300000, guid: 0dae724cb893d234693f768c9f4c20b9, type: 3}
+  - {fileID: 8300000, guid: 0ba9bb808b6101f4a8c553e697222bcb, type: 3}
 --- !u!1 &1200729491
 GameObject:
   m_ObjectHideFlags: 0
@@ -7315,7 +7395,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!50 &1359114077
 Rigidbody2D:
   serializedVersion: 4
@@ -8923,3 +9003,4 @@ SceneRoots:
   - {fileID: 326186935}
   - {fileID: 1675384733}
   - {fileID: 1758496455}
+  - {fileID: 450063164}
