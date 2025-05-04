@@ -61,6 +61,7 @@ public class ArduinoController : MonoBehaviour
         // 更新上一帧状态
         previousRedState = currentRedState;
         previousGreenState = currentGreenState;
+
     }
 
 

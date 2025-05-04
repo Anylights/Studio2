@@ -99,6 +99,10 @@ public class CharacterDialogueManager : MonoBehaviour
             (Input.GetKeyDown(KeyCode.Space) || arduinoButtonPressed))
         {
             ContinueDialogue();
+
+            //触发默认脉冲效果，有bug，暂时不实现
+            // int the_Button_Pressed = ArduinoController.Instance.RedButtonDown ? 0 : 1;
+            // EventCenter.Instance.TriggerEvent<int>("ContinueDialogue", the_Button_Pressed);
         }
 
         // 更新所有活跃对话框的位置(如果设置了跟随)
@@ -303,5 +307,7 @@ public class CharacterDialogueManager : MonoBehaviour
         var dialogueRunner = FindObjectOfType<MinimalDialogueRunner>();
         if (dialogueRunner != null)
             dialogueRunner.Continue();
+
+
     }
 }

@@ -15,10 +15,6 @@ public class RgbController : MonoBehaviour
     [SerializeField] private Color optionStrip2Color = Color.green; // 显示对话选项时灯带2的颜色
     [SerializeField] private Color defaultColor = Color.white;      // 默认灯带颜色
 
-    [Header("脉冲效果设置")]
-    [SerializeField] private float pulseEffectDuration = 0.5f; // 脉冲效果持续时间，默认0.5秒
-    [SerializeField] private int pulseTailLength = 5; // 脉冲效果的尾部长度
-
     // 当前灯带的颜色，用于在脉冲效果结束后恢复
     private Color strip1CurrentColor = Color.white;
     private Color strip2CurrentColor = Color.white;
@@ -55,6 +51,7 @@ public class RgbController : MonoBehaviour
         }
 
         EventCenter.Instance.Subscribe<int>("optionSelected", HandlePulseEffect);
+        // EventCenter.Instance.Subscribe<int>("ContinueDialogue", HandleDefaultPulseEffect);
     }
 
     private void OnDestroy()
@@ -67,6 +64,7 @@ public class RgbController : MonoBehaviour
             optionsView.OnOptionsHidden -= OnDialogueOptionsHidden;
         }
         EventCenter.Instance.Unsubscribe<int>("optionSelected", HandlePulseEffect);
+        // EventCenter.Instance.Unsubscribe<int>("ContinueDialogue", HandleDefaultPulseEffect);
 
         // 关闭灯带
         TurnOffLights();
@@ -220,103 +218,23 @@ public class RgbController : MonoBehaviour
 
     void HandlePulseEffect(int optionIndex)
     {
-        int stripIndex = optionIndex;
-        StartCoroutine(PulseEffectWithTailCoroutine(stripIndex));
+        UduinoManager.Instance.sendCommand("PulseEffect", optionIndex.ToString());
     }
 
-    // // 脉冲效果协程
-    // private IEnumerator PulseEffectCoroutine(int stripIndex)
+    // void HandleDefaultPulseEffect(int stripIndex)
     // {
-    //     if (!IsUduinoAvailable) yield break;
+    //     if (!IsUduinoAvailable) return;
 
-    //     Color targetColor = stripIndex == 0 ? optionStrip1Color : optionStrip2Color;
-
-    //     // 获取灯带LED总数量
-    //     int ledCount = 52;
-
-    //     // 先关闭灯带
-    //     SetStripColor(stripIndex, Color.black);
-
-    //     yield return new WaitForSeconds(0.1f);
-
-    //     // 计算时间步长
-    //     float stepTime = pulseEffectDuration / ledCount;
-
-    //     // 执行脉冲效果 - 一个接一个亮起
-    //     for (int i = 0; i < ledCount; i++)
+    //     try
     //     {
-    //         // 只设置当前位置的LED，不重置整个灯带
-    //         SetPixelColor(stripIndex, i, targetColor);
+    //         UduinoManager.Instance.sendCommand("DefaultPulseEffect", stripIndex.ToString());
 
-    //         yield return new WaitForSeconds(stepTime);
+    //         if (enableDebugLogs)
+    //             Debug.Log($"已发送默认脉冲效果命令，灯带索引: {stripIndex}");
     //     }
-
-    //     // 短暂显示所有灯亮起的状态
-    //     yield return new WaitForSeconds(0.3f);
-
-    //     // 明确地重置整个灯带 - 这是关键
-    //     SetStripColor(stripIndex, defaultColor);
-
-    //     if (enableDebugLogs)
-    //         Debug.Log($"脉冲效果结束，灯带{stripIndex}已恢复为默认颜色");
+    //     catch (System.Exception e)
+    //     {
+    //         Debug.LogError($"发送默认脉冲效果命令失败: {e.Message}");
+    //     }
     // }
-
-    // 另一种实现 - 带"尾巴"的流动效果
-    private IEnumerator PulseEffectWithTailCoroutine(int stripIndex)
-    {
-        if (!IsUduinoAvailable) yield break;
-
-        Color targetColor = stripIndex == 0 ? optionStrip1Color : optionStrip2Color;
-        int ledCount = 52;
-
-        // 重置灯带
-        SetStripColor(stripIndex, Color.black);
-
-        yield return new WaitForSeconds(0.1f);
-
-        float stepTime = pulseEffectDuration / ledCount;
-
-        // 实现带"尾巴"的效果
-        for (int i = 0; i < ledCount + pulseTailLength; i++)
-        {
-            // 先清除所有LED
-            SetStripColor(stripIndex, Color.black);
-
-            // 设置"尾巴"中的每个LED，带有亮度渐变
-            for (int j = 0; j < pulseTailLength; j++)
-            {
-                int pixelIndex = i - j;
-
-                // 确保像素索引在有效范围内
-                if (pixelIndex >= 0 && pixelIndex < ledCount)
-                {
-                    // 根据位置计算亮度
-                    float intensity = 1.0f - ((float)j / pulseTailLength);
-
-                    // 创建渐变颜色
-                    Color fadeColor = new Color(
-                        targetColor.r * intensity,
-                        targetColor.g * intensity,
-                        targetColor.b * intensity
-                    );
-
-                    SetPixelColor(stripIndex, pixelIndex, fadeColor);
-                }
-            }
-
-            yield return new WaitForSeconds(stepTime);
-        }
-
-        // 在PulseEffectCoroutine结尾修改为：
-        // 短暂显示所有灯亮起的状态
-        yield return new WaitForSeconds(0.3f);
-
-        // 先明确关闭所有灯带
-        SetStripColor(0, Color.black);
-        SetStripColor(1, Color.black);
-        yield return new WaitForSeconds(0.1f);  // 给Arduino一些处理时间
-
-        // 再明确地设置默认颜色
-        SetDefaultColor();
-    }
 }

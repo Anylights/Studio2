@@ -301,28 +301,30 @@ public class MinimalOptionsView : MonoBehaviour
     // 选择指定索引的选项
     private void SelectOption(int optionIndex)
     {
-        // 先触发选项隐藏事件
-
-        EventCenter.Instance.TriggerEvent<int>("optionSelected", optionIndex);
-
-        if (optionIndex >= 0 && optionIndex < currentOptions.Length)
+        // 检查选项是否有效
+        if (optionIndex >= 0 && optionIndex < currentOptions.Length && currentOptions[optionIndex].IsAvailable)
         {
-            if (currentOptions[optionIndex].IsAvailable)
-            {
-                optionsActive = false;
-                StartCoroutine(SelectOptionWithFade(optionIndex));
-            }
+            // 先发送事件
+            EventCenter.Instance.TriggerEvent<int>("optionSelected", optionIndex);
+
+            // 标记选项为非活动
+            optionsActive = false;
+
+            // 开始淡出效果，但延迟实际的选项选择
+            StartCoroutine(DelayedOptionSelection(optionIndex));
         }
     }
 
-    // 带淡出效果的选择选项
-    private IEnumerator SelectOptionWithFade(int optionIndex)
+    // 先淡出UI，然后延迟选择选项
+    private IEnumerator DelayedOptionSelection(int optionIndex)
     {
-
         // 先淡出所有选项
         yield return StartCoroutine(FadeOutAllOptions());
 
-        // 设置选中的选项
+        // 等待额外的时间让Arduino完成脉冲效果
+        yield return new WaitForSeconds(0.5f);
+
+        // 再选择选项
         runner.SetSelectedOption(currentOptions[optionIndex].DialogueOptionID);
     }
 
