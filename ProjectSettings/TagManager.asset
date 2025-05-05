@@ -11,7 +11,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - Effect
   - 
   - 
   - 
@@ -41,6 +41,18 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: UIBackGround
+  - name: BlackBackground
     uniqueID: 3952616971
+    locked: 0
+  - name: Scene
+    uniqueID: 1401673687
+    locked: 0
+  - name: Character
+    uniqueID: 2633740327
+    locked: 0
+  - name: Effect
+    uniqueID: 2612567031
+    locked: 0
+  - name: UI
+    uniqueID: 3594234881
     locked: 0

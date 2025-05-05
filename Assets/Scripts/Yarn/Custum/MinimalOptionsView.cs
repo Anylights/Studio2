@@ -304,6 +304,9 @@ public class MinimalOptionsView : MonoBehaviour
         // 检查选项是否有效
         if (optionIndex >= 0 && optionIndex < currentOptions.Length && currentOptions[optionIndex].IsAvailable)
         {
+
+            // 先触发选项隐藏事件
+            OnOptionsHidden?.Invoke();
             // 先发送事件
             EventCenter.Instance.TriggerEvent<int>("optionSelected", optionIndex);
 

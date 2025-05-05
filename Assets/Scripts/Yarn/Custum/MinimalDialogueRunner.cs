@@ -8,7 +8,7 @@ using System.Linq;
 public class MinimalDialogueRunner : MonoBehaviour
 {
     public YarnProject project;
-    public VariableStorageBehaviour VariableStorage;
+    public InMemoryVariableStorage VariableStorage;
     public LineProviderBehaviour LineProvider;
 
     public bool isRunning { get; internal set; } = false;
@@ -129,6 +129,15 @@ public class MinimalDialogueRunner : MonoBehaviour
             Debug.LogWarning("Can't select an option when not currently running dialogue");
             return;
         }
+
+        // 确保dialogue不为null
+        if (dialogue == null)
+        {
+            Debug.LogError("对话系统已被销毁，无法继续");
+            isRunning = false;
+            return;
+        }
+
         dialogue.SetSelectedOption(optionIndex);
         dialogue.Continue();
     }

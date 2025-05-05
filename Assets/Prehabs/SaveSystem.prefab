@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1096513601648737113
+--- !u!1 &6855261099033937741
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,9 +8,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 493859649445956661}
-  - component: {fileID: 4462523384138864456}
-  - component: {fileID: 803164317576498500}
+  - component: {fileID: 9072061979156019856}
+  - component: {fileID: 4722961962071383021}
   m_Layer: 0
   m_Name: SaveSystem
   m_TagString: Untagged
@@ -18,13 +17,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &493859649445956661
+--- !u!4 &9072061979156019856
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1096513601648737113}
+  m_GameObject: {fileID: 6855261099033937741}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.6831507, y: -0.5372411, z: 0.5726693}
@@ -33,33 +32,15 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4462523384138864456
+--- !u!114 &4722961962071383021
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1096513601648737113}
+  m_GameObject: {fileID: 6855261099033937741}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d28b057d0743bff4188633cece77e242, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &803164317576498500
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1096513601648737113}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 90a67af90e9aeb8428fb13218a2bc3df, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  savePanel: {fileID: 0}
-  saveButton: {fileID: 0}
-  loadButton: {fileID: 0}
-  resetButton: {fileID: 0}
-  saveInfoText: {fileID: 0}
-  showSaveInfoOnStart: 1

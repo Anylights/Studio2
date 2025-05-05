@@ -13,9 +13,6 @@ public class DialogueSupportComponent : MonoBehaviour
     // 用于存储已注册的YarnCommand
     private Dictionary<string, Delegate> commandHandlers = new Dictionary<string, Delegate>();
 
-    // 添加一个标志，用于跟踪对话是否已经开始过
-    private bool hasStartedDialogue = false;
-
     void Start()
     {
         runner = FindObjectOfType<MinimalDialogueRunner>();
@@ -36,14 +33,21 @@ public class DialogueSupportComponent : MonoBehaviour
             if (runner == null || ArduinoController.Instance == null) return;
         }
 
-        // 修改：使用 Arduino 按钮开始对话，但只能使用一次
-        // 检查对话是否未运行，是否未开始过对话，并且按下了红色或绿色按钮
-        if (!runner.isRunning && !hasStartedDialogue && (ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown))
+        // 获取当前场景名称
+        string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+        // 如果当前场景是Begin，则检测按钮，开始对话
+        if (currentSceneName == "Begin")
         {
-            Debug.Log("Arduino button pressed, starting dialogue for the first time.");
-            runner.StartDialogue(); // 默认启动 "Start" 节点
-            hasStartedDialogue = true; // 标记对话已经开始过
+            // 修改：使用 Arduino 按钮开始对话
+            if (!runner.isRunning && (ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown) && !(ArduinoController.Instance.RedButtonDown && ArduinoController.Instance.GreenButtonDown))
+            {
+                Debug.Log("Arduino button pressed, starting dialogue for the first time.");
+                runner.StartDialogue("Start");
+            }
         }
+
+
     }
 
     public void HandleCommand(string[] commandText)

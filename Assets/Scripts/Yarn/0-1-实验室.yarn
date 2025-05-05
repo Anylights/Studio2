@@ -1,10 +1,7 @@
-title: Start
+title: lab
 tags:
-position: -165,-269
+position: -252,-511
 ---
-测试部分
-    ->开始测试
-    -> 继续
 男研究员: 设备都准备好了吗？
 女研究员: 是的，都准备好了。
 男研究员: 处理单元、分析单元、覆写单元都准备好了？
@@ -19,42 +16,69 @@ position: -165,-269
     -> 能。
         男研究员: 好的，通讯系统正常。请您不要紧张，实验很快就开始。
 男研究员: 现在我们来做一下身份确认。
-男研究员: 您的全名是叫萨拉·坎贝尔，对吗？
+<<declare $NotZ = false>>
+<<set $NotZ = false>>
+男研究员: 您的全名是叫埃里克·坎贝尔·Z，对吗？
     -> 不是。
-        男研究员: ...不是吗？但是您提供的身份资料都对的上,ID是不会骗人的。您确认您不是萨拉·坎贝尔吗？
+        <<set $NotZ = true>>
+        男研究员: ...不是吗？但是您提供的身份资料都对的上,ID是不会骗人的。您确认您不是埃里克·坎贝尔·Z吗？
         -> 不是。
-            男研究员: 好的，没关系，我们很快就会知道您是谁了。
+            男研究员: 那请问您的名字是？
+                -> 我没有名字
+                    男研究员: ...没关系，我们很快就知道您是谁了。
+                -> 布什·戈门
+                    男研究员: ···？
+                    男研究员: 您认真的吗？
+                        -> 是的。
+                           男研究员: 见鬼，<waitfor=0.5><shake a=0.5><notype>我才不会</notype> <waitfor=0.5><notype>相信这种</notype><waitfor=0.5><notype>低级的鬼话。</notype></shake>
+                        -> 不是。
+                           男研究员: ...
+                        男研究员: Z先生，我想您应该知道，我们没有时间再浪费了。
+                        男研究员: 实验马上开始，请您保持配合。
         -> 是的。
-            男研究员: 好的，坎贝尔先生。非常荣幸您能参与这次实验。这将是载入人类史册的实验。
+            男研究员: 好的。Z先生,您开了一个玩笑，但我希望您能在实验中保持配合。
+            男研究员: 因为这将是载入人类史册的实验。
     -> 是的。
-        男研究员: 好的，坎贝尔先生。非常荣幸您能参与这次实验。这将是载入人类史册的实验。
+        男研究员: 好的，Z先生。非常荣幸您能参与这次实验。这将是载入人类史册的实验。
 男研究员: 在此之前，请允许我再次向您重申我们的责任申明。
 
 <<declare $NotAgree = false>>
+<<declare $GiveUp = false>>
 男研究员: 您同意，我们以实验装置读取您的意识，并进行脑电波分析。
     -> 我不同意。<<if $NotAgree == false>> 
-        <<set $NotAgree = true>>
         男研究员: 您确认吗？如果您现在放弃，我们之前所有的合约都会失效。
-        男研究员: 包括我们谈判了很久才同意的报酬。
-        -> 我不同意。<<if $NotAgree == false>> 
-            123456789
-        -> 我同意。
+        男研究员: <color=red><shake a=0.5>包括我们谈判了很久才同意的报酬。</shake></color>
+        -> 我确认放弃。<<if $NotAgree == false>> 
+            <<set $NotAgree = true>>
+            <<jump Back>>
+        -> 我开玩笑的。
+            男研究员: Z先生。我想再强调一遍。
+            男研究员: <shake a=0.5><color=red><notype>我们</notype><waitfor=0.5><notype>真的</notype><waitfor=0.5><notype>没有</notype><waitfor=0.5><notype>时间</notype><waitfor=0.5><notype>再浪费了。</notype></shake></color>
+            <<set $NotAgree = true>>
     -> 我同意。
-男研究员: 好的。您同意，实验中您会短暂失去对身体的控制。
+男研究员: 好的。您知情，实验中您会短暂失去对身体的控制。
     -> 我不同意。<<if $NotAgree == false>> 
-        <<set $NotAgree = true>>
         男研究员: 您确认吗？如果您现在放弃，我们之前所有的合约都会失效。
-        男研究员: 包括我们谈判了很久才同意的报酬。
-        -> 我不同意。<<if $NotAgree == false>> 
-        -> 我同意。
+        男研究员: <color=red><shake a=0.5>包括我们谈判了很久才同意的报酬。</shake></color>
+        -> 我确认放弃。<<if $NotAgree == false>> 
+            <<set $NotAgree = true>>
+            <<jump Back>>
+        -> 我开玩笑的。
+            男研究员: Z先生。我想再强调一遍。
+            男研究员: <shake a=0.5><color=red><notype>我们</notype><waitfor=0.5><notype>真的</notype><waitfor=0.5><notype>没有</notype><waitfor=0.5><notype>时间</notype><waitfor=0.5><notype>再浪费了。</notype></shake></color>
+            <<set $NotAgree = true>>
     -> 我同意。
 男研究员: 好的。最后，您同意，您将承担实验可能带来的所有后果。
     -> 我不同意。<<if $NotAgree == false>> 
-        <<set $NotAgree = true>>
         男研究员: 您确认吗？如果您现在放弃，我们之前所有的合约都会失效。
-        男研究员: 包括我们谈判了很久才同意的报酬。
-        -> 我不同意。<<if $NotAgree == false>> 
-        -> 我同意。
+        男研究员: <color=red><shake a=0.5>包括我们谈判了很久才同意的报酬。</shake></color>
+        -> 我确认放弃。<<if $NotAgree == false>> 
+            <<set $NotAgree = true>>
+            <<jump Back>>
+        -> 我开玩笑的。
+            男研究员: Z先生。我想再强调一遍。
+            男研究员: <shake a=0.5><color=red><notype>我们</notype><waitfor=0.5><notype>真的</notype><waitfor=0.5><notype>没有</notype><waitfor=0.5><notype>时间</notype><waitfor=0.5><notype>再浪费了。</notype></shake></color>
+            <<set $NotAgree = true>>
     -> 我同意。
 男研究员: 好的。非常感谢您的配合。
 
@@ -83,7 +107,43 @@ position: -165,-269
 
 title: End
 tags:
-position: -165,-269
+position: -323,-204
 ---
 感谢您的游玩，测试暂时结束。
 ===
+
+title: Back
+position: 95,-216
+---
+// 检查是否是从存档返回
+<<if $GiveUp == true>>
+<<play_timeline 0101>>
+    男研究员: ...
+    男研究员: Z先生。
+    男研究员: 我很奇怪您为什么会做出这样的选择。
+    男研究员: 我是说，您怎么又回来了？
+    <<play_timeline 0100>>
+<<else>>
+    男研究员: ...
+    男研究员: Z先生。
+    男研究员: 我很奇怪您为什么会做出这样的选择。
+    
+    <<set $GiveUp = true>>
+    
+    <<if $NotZ == true>> 
+        男研究员: 您让我觉得，您似乎真的不是埃里克·坎贝尔·Z。
+    <<endif>>
+    
+    男研究员: ...但我们还是尊重您的选择。
+    男研究员: 再见。
+    
+    // 保存游戏状态，这样下次加载时会进入上面的分支
+    <<save_game>>
+    
+    // 退出游戏
+    <<quit_game>>
+<<endif>>
+===
+
+
+

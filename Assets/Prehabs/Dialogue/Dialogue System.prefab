@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4196788969653244785}
   - component: {fileID: 1222785335256991482}
+  - component: {fileID: 3403115473875527703}
   - component: {fileID: 9047258774495669040}
   m_Layer: 0
   m_Name: Dialogue System
@@ -50,6 +51,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   showDebug: 0
   debugTextView: {fileID: 0}
+--- !u!114 &3403115473875527703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 748157442385032209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10f0777399ec04ef6957da2ae823eb8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textLanguageCode: zh-CN
 --- !u!114 &9047258774495669040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -64,8 +78,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   project: {fileID: 7545569452688597077, guid: d63b526d1c1cc5746bbf52f7e5954ec9, type: 3}
   VariableStorage: {fileID: 1222785335256991482}
-  LineProvider: {fileID: 0}
-  characterDialogueManager: {fileID: 0}
+  LineProvider: {fileID: 3403115473875527703}
+  characterDialogueManager: {fileID: 1624345334084664268}
   OptionsNeedPresentation:
     m_PersistentCalls:
       m_Calls:
@@ -593,8 +607,8 @@ Canvas:
   m_VertexColorAlwaysGammaSpace: 1
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: 5
+  m_SortingLayerID: -700732415
+  m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!114 &249555213466813407
 MonoBehaviour:
