@@ -8,7 +8,24 @@ using UnityEngine;
 /// </summary>
 public class SceneContentManager : MonoBehaviour
 {
-    public static SceneContentManager Instance { get; private set; }
+    #region 单例实现
+    private static SceneContentManager _instance;
+    public static SceneContentManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindObjectOfType<SceneContentManager>();
+                if (_instance == null)
+                {
+                    Debug.LogError("场景中找不到SceneContentManager实例！");
+                }
+            }
+            return _instance;
+        }
+    }
+    #endregion
 
     [System.Serializable]
     public class SceneContent
@@ -31,40 +48,26 @@ public class SceneContentManager : MonoBehaviour
     public delegate void SceneChangeHandler(string previousScene, string newScene);
     public event SceneChangeHandler OnSceneChanged;
 
+    // 游戏事件
+    public delegate void GameEventHandler();
+    public event GameEventHandler OnGameStart;
+
     private Dictionary<string, GameObject> sceneMap = new Dictionary<string, GameObject>();
     private string currentSceneName;
     private bool isTransitioning = false;
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (_instance != null && _instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
-        Instance = this;
+        _instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // 初始化场景映射
         InitializeSceneMap();
-    }
-
-    private void InitializeSceneMap()
-    {
-        sceneMap.Clear();
-        foreach (SceneContent content in sceneContents)
-        {
-            if (content.contentRoot != null)
-            {
-                sceneMap.Add(content.sceneName, content.contentRoot);
-                content.contentRoot.SetActive(content.initialState);
-            }
-            else
-            {
-                Debug.LogError($"场景 {content.sceneName} 没有指定内容根物体！");
-            }
-        }
     }
 
     private void Start()
@@ -73,30 +76,61 @@ public class SceneContentManager : MonoBehaviour
         ChangeScene(initialSceneName);
     }
 
-    /// <summary>
-    /// 切换到指定场景内容
-    /// </summary>
-    /// <param name="sceneName">场景名称</param>
-    public void ChangeScene(string sceneName)
+    private void InitializeSceneMap()
     {
-        if (isTransitioning)
-            return;
+        sceneMap.Clear();
 
-        if (sceneName == currentSceneName)
-            return;
-
-        if (!sceneMap.ContainsKey(sceneName))
+        if (enableDebugLog)
         {
-            Debug.LogError($"场景 '{sceneName}' 不存在!");
-            return;
+            Debug.Log("=== 初始化场景内容映射 ===");
         }
 
-        StartCoroutine(TransitionToScene(sceneName));
+        foreach (SceneContent content in sceneContents)
+        {
+            if (content.contentRoot != null)
+            {
+                sceneMap.Add(content.sceneName, content.contentRoot);
+                content.contentRoot.SetActive(content.initialState);
+
+                if (enableDebugLog)
+                {
+                    Debug.Log($"已注册场景: {content.sceneName} -> {content.contentRoot.name}");
+                }
+            }
+            else
+            {
+                Debug.LogError($"错误: 场景 {content.sceneName} 没有指定内容根物体！");
+            }
+        }
     }
 
     /// <summary>
-    /// 场景过渡协程
+    /// 切换到指定场景内容
     /// </summary>
+    public void ChangeScene(string sceneName)
+    {
+        if (isTransitioning)
+        {
+            if (enableDebugLog) Debug.LogWarning($"无法切换场景: 当前正在进行另一个场景切换");
+            return;
+        }
+
+        if (sceneName == currentSceneName)
+        {
+            if (enableDebugLog) Debug.LogWarning($"无法切换场景: 已经在场景 {sceneName} 中");
+            return;
+        }
+
+        if (!sceneMap.ContainsKey(sceneName))
+        {
+            Debug.LogError($"无法切换场景: 场景 {sceneName} 不存在! 可用场景: {string.Join(", ", GetAllSceneNames())}");
+            return;
+        }
+
+        if (enableDebugLog) Debug.Log($"开始切换场景: {currentSceneName} -> {sceneName}");
+        StartCoroutine(TransitionToScene(sceneName));
+    }
+
     private IEnumerator TransitionToScene(string newSceneName)
     {
         isTransitioning = true;
@@ -104,46 +138,63 @@ public class SceneContentManager : MonoBehaviour
 
         // 显示过渡画面
         if (transitionCanvas != null)
+        {
             transitionCanvas.SetActive(true);
+        }
 
         yield return new WaitForSeconds(transitionDuration * 0.5f);
 
         // 隐藏当前场景
         if (!string.IsNullOrEmpty(currentSceneName) && sceneMap.ContainsKey(currentSceneName))
+        {
+            if (enableDebugLog) Debug.Log($"隐藏场景: {currentSceneName}");
             sceneMap[currentSceneName].SetActive(false);
+        }
 
         // 显示新场景
-        sceneMap[newSceneName].SetActive(true);
+        if (sceneMap.ContainsKey(newSceneName))
+        {
+            if (enableDebugLog) Debug.Log($"显示场景: {newSceneName}");
+            sceneMap[newSceneName].SetActive(true);
+        }
+        else
+        {
+            Debug.LogError($"严重错误: 场景 {newSceneName} 不在场景映射中");
+            isTransitioning = false;
+            yield break;
+        }
+
         currentSceneName = newSceneName;
 
-        // 触发场景内容初始化
+        // 初始化新场景内容
         InitializeSceneContent(newSceneName);
 
         yield return new WaitForSeconds(transitionDuration * 0.5f);
 
         // 隐藏过渡画面
         if (transitionCanvas != null)
+        {
             transitionCanvas.SetActive(false);
+        }
 
         // 触发场景变化事件
         OnSceneChanged?.Invoke(previousScene, newSceneName);
 
         isTransitioning = false;
+        if (enableDebugLog) Debug.Log($"场景切换完成: 当前场景为 {currentSceneName}");
     }
 
-    /// <summary>
-    /// 初始化新激活的场景内容
-    /// </summary>
     private void InitializeSceneContent(string sceneName)
     {
         if (sceneMap.TryGetValue(sceneName, out GameObject sceneRoot))
         {
-            // 查找SceneContentInitializer组件
             SceneContentInitializer[] initializers = sceneRoot.GetComponentsInChildren<SceneContentInitializer>(true);
             foreach (var initializer in initializers)
             {
                 if (initializer != null)
+                {
                     initializer.OnSceneActivated();
+                }
             }
         }
     }
@@ -175,13 +226,50 @@ public class SceneContentManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 调试日志
+    /// 启动游戏 - 将开始界面逻辑从DialogueSupportComponent移到这里
     /// </summary>
-    private void DebugLog(string message)
+    public void StartGame()
     {
-        if (enableDebugLog)
+        if (enableDebugLog) Debug.Log("准备启动游戏...");
+
+        // 触发游戏开始事件
+        OnGameStart?.Invoke();
+
+        // 其他可能需要的启动逻辑可以添加在这里
+    }
+
+    /// <summary>
+    /// 退出游戏
+    /// </summary>
+    public void QuitGame()
+    {
+        if (enableDebugLog) Debug.Log("退出游戏");
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
+    /// <summary>
+    /// Arduino按钮控制的游戏启动逻辑，从DialogueSupportComponent移动到这里
+    /// </summary>
+    private void Update()
+    {
+        // 如果需要Arduino按钮控制逻辑，可以在这里添加
+        // 如：判断按钮按下，触发游戏开始等
+        if (ArduinoController.Instance != null)
         {
-            Debug.Log($"[SceneContentManager] {message}");
+            // 如果是开始界面且未处于过渡状态
+            if (currentSceneName == initialSceneName && !isTransitioning)
+            {
+                // 检测Arduino按钮按下
+                if (ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown)
+                {
+                    StartGame();
+                }
+            }
         }
     }
 }

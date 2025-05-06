@@ -6,52 +6,46 @@ using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
 using Yarn.Unity;
+
+/// <summary>
+/// 对话支持组件 - 负责处理来自Yarn脚本的命令
+/// </summary>
 public class DialogueSupportComponent : MonoBehaviour
 {
-    MinimalDialogueRunner runner;
+    [SerializeField] private MinimalDialogueRunner runner;
 
     // 用于存储已注册的YarnCommand
     private Dictionary<string, Delegate> commandHandlers = new Dictionary<string, Delegate>();
 
     void Start()
     {
-        runner = FindObjectOfType<MinimalDialogueRunner>();
+        if (runner == null)
+        {
+            runner = FindObjectOfType<MinimalDialogueRunner>();
+            if (runner == null)
+            {
+                Debug.LogError("无法找到MinimalDialogueRunner，对话支持组件无法工作");
+                return;
+            }
+        }
 
         // 自动注册所有带有YarnCommand属性的方法
         RegisterYarnCommands();
     }
 
-    void Update()
-    {
-        // 检查 Arduino 控制器实例是否存在
-        // 以及 runner 是否已经初始化
-        if (runner == null || ArduinoController.Instance == null)
-        {
-            // 如果 runner 还没找到，尝试再次查找
-            if (runner == null) runner = FindObjectOfType<MinimalDialogueRunner>();
-            // 如果任一实例仍未找到，则返回
-            if (runner == null || ArduinoController.Instance == null) return;
-        }
-
-        // 获取当前场景名称
-        string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-
-
-        // 修改：使用 Arduino 按钮开始对话
-        if (!runner.isRunning && (ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown) && !(ArduinoController.Instance.RedButtonDown && ArduinoController.Instance.GreenButtonDown))
-        {
-            Debug.Log("Arduino button pressed, starting dialogue for the first time.");
-            runner.StartDialogue("Start");
-        }
-
-
-
-    }
-
+    /// <summary>
+    /// 处理来自Yarn脚本的命令
+    /// </summary>
     public void HandleCommand(string[] commandText)
     {
+        if (commandText == null || commandText.Length == 0)
+        {
+            Debug.LogWarning("收到空命令");
+            return;
+        }
+
         string commandName = commandText[0];
-        Debug.Log($"Received a command: {commandName}");
+        Debug.Log($"收到命令: {commandName}");
 
         // 检查是否有对应的命令处理器
         if (commandHandlers.TryGetValue(commandName, out var handler))
@@ -72,7 +66,7 @@ public class DialogueSupportComponent : MonoBehaviour
 
                 // 调用命令处理器
                 handler.DynamicInvoke(parameters);
-                Debug.Log($"Successfully executed command: {commandName}");
+                Debug.Log($"命令执行成功: {commandName}");
 
                 // 特殊处理：如果是play_timeline命令，不在这里继续对话
                 if (commandName != "play_timeline")
@@ -94,16 +88,18 @@ public class DialogueSupportComponent : MonoBehaviour
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error executing command {commandName}: {e.Message}");
+                Debug.LogError($"执行命令 {commandName} 时出错: {e.Message}");
             }
         }
         else
         {
-            Debug.LogWarning($"No handler found for command: {commandName}");
+            Debug.LogWarning($"未找到命令处理器: {commandName}");
         }
     }
 
-    // 注册所有标记了YarnCommand的方法
+    /// <summary>
+    /// 注册所有标记了YarnCommand的方法
+    /// </summary>
     private void RegisterYarnCommands()
     {
         // 查找所有MonoBehaviour
@@ -126,7 +122,7 @@ public class DialogueSupportComponent : MonoBehaviour
                     YarnCommandAttribute commandAttribute = attributes[0] as YarnCommandAttribute;
                     string commandName = commandAttribute.Name;
 
-                    Debug.Log($"Found YarnCommand: {commandName} in {type.Name}");
+                    Debug.Log($"发现YarnCommand: {commandName} 在 {type.Name} 中");
 
                     // 创建委托
                     Delegate handler;
@@ -152,7 +148,8 @@ public class DialogueSupportComponent : MonoBehaviour
         }
     }
 
-    public void LogNodeStarted(string node) { Debug.Log($"entered node {node}"); }
-    public void LogNodeEnded(string node) { Debug.Log($"exited node {node}"); }
-    public void LogDialogueEnded() { Debug.Log("Dialogue has finished"); }
+    // 日志辅助方法
+    public void LogNodeStarted(string node) { Debug.Log($"进入节点: {node}"); }
+    public void LogNodeEnded(string node) { Debug.Log($"离开节点: {node}"); }
+    public void LogDialogueEnded() { Debug.Log("对话已结束"); }
 }

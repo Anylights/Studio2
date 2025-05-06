@@ -16,20 +16,37 @@ using UnityEditor.SceneManagement;
 /// </summary>
 public class SaveSystem : MonoBehaviour
 {
+    #region 单例实现
+    private static SaveSystem _instance;
+    public static SaveSystem Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindObjectOfType<SaveSystem>();
+                if (_instance == null)
+                {
+                    Debug.LogError("场景中找不到SaveSystem实例！");
+                }
+            }
+            return _instance;
+        }
+    }
+    #endregion
+
     [Header("对话运行器引用")]
     [SerializeField] private MinimalDialogueRunner dialogueRunner;
 
     [Header("存档设置")]
     [SerializeField] private string saveFileName = "game_save.json";
+    [SerializeField] private bool enableDebugLog = true;
 
     // 场景与节点关系映射（场景名称->节点名称集合）
     [SerializeField] private SceneNodeMapping[] sceneNodeMappings;
 
-    // 单例模式
-    public static SaveSystem Instance { get; private set; }
-
     // 重要数据
-    [SerializeField] private string currentSceneName;
+    private string currentSceneName;
 
     [System.Serializable]
     public class SceneNodeMapping
@@ -107,18 +124,24 @@ public class SaveSystem : MonoBehaviour
 
     private void Awake()
     {
-        // 单例模式实现
-        if (Instance != null && Instance != this)
+        if (_instance != null && _instance != this)
         {
             Destroy(gameObject);
             return;
         }
 
-        Instance = this;
+        _instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // 记录当前场景
-        currentSceneName = SceneContentManager.Instance.GetCurrentSceneName();
+        // 确保能访问当前场景名称
+        if (SceneContentManager.Instance != null)
+        {
+            currentSceneName = SceneContentManager.Instance.GetCurrentSceneName();
+        }
+        else
+        {
+            Debug.LogError("无法找到SceneContentManager实例！");
+        }
     }
 
     private void Start()
@@ -129,15 +152,47 @@ public class SaveSystem : MonoBehaviour
             dialogueRunner = FindObjectOfType<MinimalDialogueRunner>();
             if (dialogueRunner == null)
             {
-                Debug.LogError("无法找到MinimalDialogueRunner，保存系统可能无法正常工作！");
+                Debug.LogError("无法找到MinimalDialogueRunner，保存系统不可用！");
                 return;
             }
         }
+
+        // 订阅SceneContentManager的事件
+        if (SceneContentManager.Instance != null)
+        {
+            SceneContentManager.Instance.OnSceneChanged += OnSceneChanged;
+            SceneContentManager.Instance.OnGameStart += OnGameStart;
+        }
     }
 
-    // 1. 开始游戏
+    private void OnDestroy()
+    {
+        // 取消订阅事件
+        if (SceneContentManager.Instance != null)
+        {
+            SceneContentManager.Instance.OnSceneChanged -= OnSceneChanged;
+            SceneContentManager.Instance.OnGameStart -= OnGameStart;
+        }
+    }
+
+    // 处理场景变化事件
+    private void OnSceneChanged(string previousScene, string newScene)
+    {
+        currentSceneName = newScene;
+        Log($"场景已变更: {previousScene} -> {newScene}");
+    }
+
+    // 处理游戏开始事件
+    private void OnGameStart()
+    {
+        StartGame();
+    }
+
+    // 启动游戏
     public void StartGame()
     {
+        Log("开始游戏");
+
         // 检查是否有存档
         if (DoesSaveExist())
         {
@@ -154,30 +209,31 @@ public class SaveSystem : MonoBehaviour
     // 创建新游戏
     private void NewGame()
     {
-        // 确保变量存储是空的
+        Log("开始新游戏");
+
+        // 清空变量存储
         if (dialogueRunner != null && dialogueRunner.VariableStorage != null)
         {
             dialogueRunner.VariableStorage.Clear();
         }
 
-        // 从Start节点开始对话
-        if (dialogueRunner != null)
+        // 从lab节点开始对话
+        if (SceneContentManager.Instance != null)
         {
-            Debug.Log("开始新游戏，切换到实验室场景");
-            ChangeSceneCommand("Level1_lab", "lab");
+            ChangeSceneAndStartDialogue("Level1_lab", "lab");
         }
         else
         {
-            Debug.LogError("无法开始新游戏：对话运行器不可用");
+            Error("无法创建新游戏：场景管理器不可用");
         }
     }
 
-    // 2. 保存游戏
+    // 保存游戏
     public void SaveGame()
     {
         if (dialogueRunner == null || dialogueRunner.VariableStorage == null)
         {
-            Debug.LogError("无法保存游戏：对话运行器或变量存储不可用");
+            Error("无法保存游戏：对话运行器或变量存储不可用");
             return;
         }
 
@@ -208,10 +264,11 @@ public class SaveSystem : MonoBehaviour
         try
         {
             File.WriteAllText(path, json);
+            Log($"游戏已保存：{path}");
         }
         catch (Exception e)
         {
-            Debug.LogError($"保存游戏失败：{e.Message}");
+            Error($"保存游戏失败：{e.Message}");
         }
     }
 
@@ -222,7 +279,7 @@ public class SaveSystem : MonoBehaviour
 
         if (!File.Exists(path))
         {
-            Debug.LogWarning("没有找到存档，无法加载游戏");
+            Log("没有找到存档，开始新游戏");
             NewGame();
             return;
         }
@@ -235,132 +292,194 @@ public class SaveSystem : MonoBehaviour
             // 从序列化恢复Dictionary
             saveData.RestoreFromSerialization();
 
-            // // 加载场景（如果需要）
-            // if (saveData.currentSceneName != currentSceneName)
-            // {
-            // 需要加载不同的场景
-            StartCoroutine(LoadSceneAndContinue(saveData));
-            Debug.Log("正在从存档加载场景");
-            // }
-            // else
-            // {
-            //     // 在当前场景继续
-            //     ContinueFromSaveData(saveData);
-            // }
+            Log($"正在加载存档: 场景={saveData.currentSceneName}, 节点={saveData.currentNodeName}");
 
+            // 切换到保存的场景并加载对话
+            ChangeSceneAndContinueDialogue(saveData);
         }
         catch (Exception e)
         {
-            Debug.LogError($"加载游戏失败：{e.Message}");
+            Error($"加载游戏失败：{e.Message}");
             NewGame();
         }
     }
 
-    // 加载场景并继续对话
-    private IEnumerator LoadSceneAndContinue(SaveData saveData)
+    // 切换场景并继续对话
+    private void ChangeSceneAndContinueDialogue(SaveData saveData)
     {
-        // 确保停止当前对话
-        if (dialogueRunner != null)
+        if (saveData == null)
+        {
+            Error("无法继续对话：存档数据为空");
+            return;
+        }
+
+        if (SceneContentManager.Instance == null)
+        {
+            Error("无法切换场景：场景管理器不可用");
+            return;
+        }
+
+        // 如果已经在正确的场景中
+        if (currentSceneName == saveData.currentSceneName)
+        {
+            Log($"已在目标场景 {saveData.currentSceneName} 中，直接继续对话");
+            ContinueDialogueFromSaveData(saveData);
+            return;
+        }
+
+        // 检查目标场景是否存在
+        if (!SceneContentManager.Instance.SceneExists(saveData.currentSceneName))
+        {
+            Error($"无法切换到场景 {saveData.currentSceneName}：场景不存在");
+            return;
+        }
+
+        // 停止当前对话
+        if (dialogueRunner != null && dialogueRunner.isRunning)
         {
             dialogueRunner.StopDialogue();
         }
 
-        // 检查SceneContentManager是否存在
-        if (SceneContentManager.Instance == null)
-        {
-            Debug.LogError("SceneContentManager不存在，无法切换场景内容");
-            yield break;
-        }
+        // 保存需要加载的节点和变量
+        string targetNodeName = saveData.currentNodeName;
+        var variables = saveData.floatVariables;
+        var stringVars = saveData.stringVariables;
+        var boolVars = saveData.boolVariables;
 
-        // 记录当前应用的场景名称
-        string targetSceneName = saveData.currentSceneName;
-        string currentSceneName = SceneContentManager.Instance.GetCurrentSceneName();
-
-        Debug.Log($"[场景切换] 当前场景: {currentSceneName}, 目标场景: {targetSceneName}, 节点: {saveData.currentNodeName}");
-
-        if (SceneContentManager.Instance.SceneExists(targetSceneName))
+        // 切换场景
+        Log($"切换到场景 {saveData.currentSceneName}");
+        SceneContentManager.Instance.OnSceneChanged += (prev, next) =>
         {
-            Debug.Log($"[场景切换] 场景 {targetSceneName} 存在，准备切换");
-        }
-        else
-        {
-            Debug.LogError($"[场景切换] 错误: 场景 {targetSceneName} 不存在!");
-            // 输出所有可用场景
-            string[] allScenes = SceneContentManager.Instance.GetAllSceneNames();
-            Debug.Log("[场景切换] 可用场景列表:");
-            foreach (var scene in allScenes)
+            if (next == saveData.currentSceneName)
             {
-                Debug.Log($"- {scene}");
+                StartCoroutine(DelayedDialogueContinue(targetNodeName, variables, stringVars, boolVars));
             }
-            yield break;
-        }
+        };
 
-        // 使用SceneContentManager切换场景内容
-        Debug.Log($"[场景切换] 正在调用SceneContentManager.ChangeScene({targetSceneName})");
-        SceneContentManager.Instance.ChangeScene(targetSceneName);
-
-        // 等待场景内容切换完成
-        yield return new WaitForSeconds(1.5f);
-
-        // 检查场景是否成功切换
-        string newCurrentSceneName = SceneContentManager.Instance.GetCurrentSceneName();
-        if (newCurrentSceneName == targetSceneName)
-        {
-            Debug.Log($"[场景切换] 成功: 当前场景已变为 {newCurrentSceneName}");
-        }
-        else
-        {
-            Debug.LogError($"[场景切换] 失败: 当前场景仍为 {newCurrentSceneName}，未能切换到 {targetSceneName}");
-            // 尝试强制再次切换
-            SceneContentManager.Instance.ChangeScene(targetSceneName);
-            yield return new WaitForSeconds(1.5f);
-        }
-
-        // 更新当前场景名称记录
-        this.currentSceneName = targetSceneName;
-
-        // 查找对话运行器
-        dialogueRunner = FindObjectOfType<MinimalDialogueRunner>();
-
-        if (dialogueRunner != null)
-        {
-            // 继续游戏
-            Debug.Log($"[场景切换] 准备在场景 {targetSceneName} 中继续对话节点: {saveData.currentNodeName}");
-            ContinueFromSaveData(saveData);
-        }
-        else
-        {
-            Debug.LogError($"[场景切换] 错误: 场景切换后无法找到MinimalDialogueRunner");
-        }
+        SceneContentManager.Instance.ChangeScene(saveData.currentSceneName);
     }
 
-    // 从存档数据继续游戏
-    private void ContinueFromSaveData(SaveData saveData)
+    // 延迟继续对话
+    private IEnumerator DelayedDialogueContinue(string nodeName, Dictionary<string, float> floats, Dictionary<string, string> strings, Dictionary<string, bool> bools)
     {
-        if (dialogueRunner == null || dialogueRunner.VariableStorage == null)
+        yield return new WaitForSeconds(0.5f);
+
+        // 重新查找对话运行器，因为场景切换可能会导致引用失效
+        dialogueRunner = FindObjectOfType<MinimalDialogueRunner>();
+
+        if (dialogueRunner == null)
         {
-            Debug.LogError("对话运行器或变量存储不可用，无法继续游戏");
-            return;
+            Error("场景切换后找不到对话运行器");
+            yield break;
         }
 
-        // 加载所有变量
-        dialogueRunner.VariableStorage.SetAllVariables(
-            saveData.floatVariables,
-            saveData.stringVariables,
-            saveData.boolVariables
-        );
+        // 设置变量
+        if (dialogueRunner.VariableStorage != null)
+        {
+            dialogueRunner.VariableStorage.SetAllVariables(floats, strings, bools);
+        }
 
-        // 先停止当前正在运行的对话
+        // 确保对话不在运行
         if (dialogueRunner.isRunning)
         {
             dialogueRunner.StopDialogue();
         }
 
-        // 从保存的节点开始对话
+        // 开始对话
+        Log($"开始对话节点: {nodeName}");
+        dialogueRunner.StartDialogue(nodeName);
+    }
+
+    // 直接在当前场景继续对话
+    private void ContinueDialogueFromSaveData(SaveData saveData)
+    {
+        if (dialogueRunner == null)
+        {
+            Error("无法继续对话：对话运行器不可用");
+            return;
+        }
+
+        // 停止当前对话
+        if (dialogueRunner.isRunning)
+        {
+            dialogueRunner.StopDialogue();
+        }
+
+        // 设置变量
+        if (dialogueRunner.VariableStorage != null)
+        {
+            dialogueRunner.VariableStorage.SetAllVariables(
+                saveData.floatVariables,
+                saveData.stringVariables,
+                saveData.boolVariables
+            );
+        }
+
+        // 开始新对话
+        Log($"在当前场景继续对话: {saveData.currentNodeName}");
         dialogueRunner.StartDialogue(saveData.currentNodeName);
     }
 
-    // 3. 重置游戏
+    // 切换场景并开始特定对话
+    private void ChangeSceneAndStartDialogue(string sceneName, string nodeName)
+    {
+        if (SceneContentManager.Instance == null)
+        {
+            Error("无法切换场景：场景管理器不可用");
+            return;
+        }
+
+        if (!SceneContentManager.Instance.SceneExists(sceneName))
+        {
+            Error($"无法切换到场景 {sceneName}：场景不存在");
+            return;
+        }
+
+        // 停止当前对话
+        if (dialogueRunner != null && dialogueRunner.isRunning)
+        {
+            dialogueRunner.StopDialogue();
+        }
+
+        // 切换场景
+        Log($"切换到场景 {sceneName} 并准备对话节点 {nodeName}");
+        SceneContentManager.Instance.OnSceneChanged += (prev, next) =>
+        {
+            if (next == sceneName)
+            {
+                StartCoroutine(DelayedDialogueStart(nodeName));
+            }
+        };
+
+        SceneContentManager.Instance.ChangeScene(sceneName);
+    }
+
+    // 延迟开始对话
+    private IEnumerator DelayedDialogueStart(string nodeName)
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        // 重新查找对话运行器
+        dialogueRunner = FindObjectOfType<MinimalDialogueRunner>();
+
+        if (dialogueRunner == null)
+        {
+            Error("场景切换后找不到对话运行器");
+            yield break;
+        }
+
+        // 确保对话不在运行
+        if (dialogueRunner.isRunning)
+        {
+            dialogueRunner.StopDialogue();
+        }
+
+        // 开始对话
+        Log($"开始对话节点: {nodeName}");
+        dialogueRunner.StartDialogue(nodeName);
+    }
+
+    // 重置游戏
     public void ResetGame()
     {
         // 删除存档
@@ -371,18 +490,29 @@ public class SaveSystem : MonoBehaviour
         {
             dialogueRunner.VariableStorage.Clear();
         }
+
+        // 切换到初始场景
+        if (SceneContentManager.Instance != null)
+        {
+            SceneContentManager.Instance.ChangeScene(SceneContentManager.Instance.GetCurrentSceneName());
+        }
     }
 
-    // 4. 退出游戏
+    // 退出游戏
     public void QuitGame()
     {
+        if (SceneContentManager.Instance != null)
+        {
+            SceneContentManager.Instance.QuitGame();
+        }
+        else
+        {
 #if UNITY_EDITOR
-        // 在编辑器中退出播放模式
-        UnityEditor.EditorApplication.isPlaying = false;
+            UnityEditor.EditorApplication.isPlaying = false;
 #else
-        // 在构建后的应用中退出
-        Application.Quit();
+            Application.Quit();
 #endif
+        }
     }
 
     // 检查存档是否存在
@@ -402,28 +532,13 @@ public class SaveSystem : MonoBehaviour
             try
             {
                 File.Delete(path);
+                Log($"存档已删除: {path}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"删除存档失败：{e.Message}");
+                Error($"删除存档失败：{e.Message}");
             }
         }
-    }
-
-    // 当场景改变时更新当前场景名称
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        currentSceneName = scene.name;
-    }
-
-    private void OnEnable()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     // 获取节点对应的场景
@@ -440,13 +555,12 @@ public class SaveSystem : MonoBehaviour
             }
         }
 
-        // 如果找不到映射关系，默认返回当前场景
         return currentSceneName;
     }
 
     #region YarnCommands
 
-    // 保存游戏的YarnCommand
+    // 保存游戏
     [YarnCommand("save_game")]
     public static void SaveGameCommand()
     {
@@ -460,7 +574,7 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
-    // 重置游戏的YarnCommand
+    // 重置游戏
     [YarnCommand("reset_game")]
     public static void ResetGameCommand()
     {
@@ -474,7 +588,7 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
-    // 退出游戏的YarnCommand
+    // 退出游戏
     [YarnCommand("quit_game")]
     public static void QuitGameCommand()
     {
@@ -494,45 +608,39 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
-    // 加载游戏的YarnCommand
+    // 开始游戏
     [YarnCommand("start_game")]
     public static void StartGameCommand()
     {
         if (Instance != null)
         {
-            Instance.StartGame();
+            // 检查是否有存档
+            if (Instance.DoesSaveExist())
+            {
+                // 如果有存档，加载存档
+                Debug.Log("[StartGameCommand] 发现存档，加载游戏");
+                Instance.LoadGame();
+            }
+            else
+            {
+                // 如果没有存档，开始新游戏
+                Debug.Log("[StartGameCommand] 无存档，开始新游戏");
+                Instance.NewGame();
+            }
         }
         else
         {
-            Debug.LogError("无法加载游戏：SaveSystem实例不可用");
+            Debug.LogError("无法开始游戏：SaveSystem实例不可用");
         }
     }
 
-    // 单场景版：切换到指定场景内容并跳转到指定节点的YarnCommand
+    // 切换场景
     [YarnCommand("change_scene")]
     public static void ChangeSceneCommand(string sceneName, string nodeName)
     {
         if (Instance != null)
         {
-            // 创建临时数据以便在新场景内容中使用
-            SaveData tempData = new SaveData
-            {
-                currentNodeName = nodeName,
-                currentSceneName = sceneName,
-                saveDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-            };
-
-            // 获取当前所有变量
-            if (Instance.dialogueRunner != null && Instance.dialogueRunner.VariableStorage != null)
-            {
-                var (floats, strings, bools) = Instance.dialogueRunner.VariableStorage.GetAllVariables();
-                tempData.floatVariables = floats;
-                tempData.stringVariables = strings;
-                tempData.boolVariables = bools;
-            }
-
-            // 开始切换场景内容
-            Instance.StartCoroutine(Instance.LoadSceneAndStartDialogue(tempData));
+            Instance.ChangeSceneAndStartDialogue(sceneName, nodeName);
         }
         else
         {
@@ -540,7 +648,7 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
-    // 切换到下一个场景的YarnCommand
+    // 切换到下一个场景
     [YarnCommand("next_scene")]
     public static void NextSceneCommand(string nodeName)
     {
@@ -560,7 +668,7 @@ public class SaveSystem : MonoBehaviour
                 }
             }
 
-            // 如果找到当前场景，尝试切换到下一个场景
+            // 切换到下一个场景
             if (currentIndex >= 0 && currentIndex < allScenes.Length - 1)
             {
                 string nextSceneName = allScenes[currentIndex + 1];
@@ -568,7 +676,7 @@ public class SaveSystem : MonoBehaviour
             }
             else
             {
-                Debug.LogError($"没有下一个场景内容可以切换");
+                Debug.LogError("没有下一个场景可以切换");
             }
         }
         else
@@ -577,106 +685,29 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
-    // 简化版场景切换命令，更方便在Yarn中使用
+    // 简化的场景切换命令
     [YarnCommand("goto_scene")]
     public static void GotoSceneCommand(string sceneName, string nodeName = "Start")
     {
         ChangeSceneCommand(sceneName, nodeName);
     }
 
-    // 调试方法：打印所有场景信息
-    [YarnCommand("debug_scenes")]
-    public static void DebugScenesCommand()
-    {
-        if (Instance != null && SceneContentManager.Instance != null)
-        {
-            string[] allScenes = SceneContentManager.Instance.GetAllSceneNames();
-            string currentScene = SceneContentManager.Instance.GetCurrentSceneName();
+    #endregion
 
-            Debug.Log("===== 场景调试信息 =====");
-            Debug.Log($"当前场景: {currentScene}");
-            Debug.Log("所有可用场景:");
-            foreach (var scene in allScenes)
-            {
-                Debug.Log($"- {scene}");
-            }
-            Debug.Log("=======================");
-        }
-        else
+    #region 日志辅助方法
+
+    private void Log(string message)
+    {
+        if (enableDebugLog)
         {
-            Debug.LogError("无法打印场景信息：SaveSystem或SceneContentManager实例不可用");
+            Debug.Log($"[SaveSystem] {message}");
         }
+    }
+
+    private void Error(string message)
+    {
+        Debug.LogError($"[SaveSystem] {message}");
     }
 
     #endregion
-
-    // 加载场景并自动开始对话
-    private IEnumerator LoadSceneAndStartDialogue(SaveData data)
-    {
-        yield return new WaitForSeconds(1f);
-
-        // 确保停止当前对话
-        if (dialogueRunner != null)
-        {
-            dialogueRunner.StopDialogue();
-        }
-
-        // 检查SceneContentManager是否存在
-        if (SceneContentManager.Instance == null)
-        {
-            Debug.LogError("SceneContentManager不存在，无法切换场景内容");
-            yield break;
-        }
-
-        // 记录当前应用的场景名称
-        string targetSceneName = data.currentSceneName;
-        Debug.Log($"开始切换到场景: {targetSceneName}, 节点: {data.currentNodeName}");
-
-        // 使用SceneContentManager切换场景内容
-        SceneContentManager.Instance.ChangeScene(targetSceneName);
-
-        // 等待场景内容切换完成
-        yield return new WaitForSeconds(1.5f);
-
-        // 更新当前场景名称
-        currentSceneName = targetSceneName;
-
-        // 查找对话运行器
-        dialogueRunner = FindObjectOfType<MinimalDialogueRunner>();
-
-        if (dialogueRunner != null)
-        {
-            // 设置所有变量
-            if (dialogueRunner.VariableStorage != null)
-            {
-                dialogueRunner.VariableStorage.SetAllVariables(
-                    data.floatVariables,
-                    data.stringVariables,
-                    data.boolVariables
-                );
-            }
-
-            yield return new WaitForSeconds(1f);
-
-            // 再次确保没有对话在运行
-            if (dialogueRunner.isRunning)
-            {
-                dialogueRunner.StopDialogue();
-            }
-
-            // 开始对话
-            Debug.Log($"在场景 {targetSceneName} 中开始对话节点: {data.currentNodeName}");
-            dialogueRunner.StartDialogue(data.currentNodeName);
-
-            // 等待一小段时间，确保对话开始后再保存
-            yield return new WaitForSeconds(0.5f);
-
-            // 对话开始后再保存游戏状态
-            SaveGame();
-        }
-        else
-        {
-            Debug.LogError($"场景切换后无法找到MinimalDialogueRunner");
-        }
-    }
 }
