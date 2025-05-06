@@ -10,9 +10,12 @@ using System.Linq;
 using UnityEditor.SceneManagement;
 #endif
 
+/// <summary>
+/// 存档系统 - 单场景版本
+/// 用于管理游戏存档和场景内容切换
+/// </summary>
 public class SaveSystem : MonoBehaviour
 {
-    public int happy;
     [Header("对话运行器引用")]
     [SerializeField] private MinimalDialogueRunner dialogueRunner;
 
@@ -26,7 +29,7 @@ public class SaveSystem : MonoBehaviour
     public static SaveSystem Instance { get; private set; }
 
     // 重要数据
-    private string currentSceneName;
+    [SerializeField] private string currentSceneName;
 
     [System.Serializable]
     public class SceneNodeMapping
@@ -115,7 +118,7 @@ public class SaveSystem : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         // 记录当前场景
-        currentSceneName = SceneManager.GetActiveScene().name;
+        currentSceneName = SceneContentManager.Instance.GetCurrentSceneName();
     }
 
     private void Start()
@@ -130,10 +133,6 @@ public class SaveSystem : MonoBehaviour
                 return;
             }
         }
-
-        // ResetGame();
-        // 开始游戏
-        // StartGame();
     }
 
     // 1. 开始游戏
@@ -155,8 +154,6 @@ public class SaveSystem : MonoBehaviour
     // 创建新游戏
     private void NewGame()
     {
-        Debug.Log("开始新游戏");
-
         // 确保变量存储是空的
         if (dialogueRunner != null && dialogueRunner.VariableStorage != null)
         {
@@ -166,6 +163,7 @@ public class SaveSystem : MonoBehaviour
         // 从Start节点开始对话
         if (dialogueRunner != null)
         {
+            Debug.Log("开始新游戏，切换到实验室场景");
             ChangeSceneCommand("Level1_lab", "lab");
         }
         else
@@ -210,7 +208,6 @@ public class SaveSystem : MonoBehaviour
         try
         {
             File.WriteAllText(path, json);
-            Debug.Log($"游戏已保存至：{path}");
         }
         catch (Exception e)
         {
@@ -238,17 +235,19 @@ public class SaveSystem : MonoBehaviour
             // 从序列化恢复Dictionary
             saveData.RestoreFromSerialization();
 
-            // 加载场景（如果需要）
-            if (saveData.currentSceneName != currentSceneName)
-            {
-                // 需要加载不同的场景
-                StartCoroutine(LoadSceneAndContinue(saveData));
-            }
-            else
-            {
-                // 在当前场景继续
-                ContinueFromSaveData(saveData);
-            }
+            // // 加载场景（如果需要）
+            // if (saveData.currentSceneName != currentSceneName)
+            // {
+            // 需要加载不同的场景
+            StartCoroutine(LoadSceneAndContinue(saveData));
+            Debug.Log("正在从存档加载场景");
+            // }
+            // else
+            // {
+            //     // 在当前场景继续
+            //     ContinueFromSaveData(saveData);
+            // }
+
         }
         catch (Exception e)
         {
@@ -260,48 +259,78 @@ public class SaveSystem : MonoBehaviour
     // 加载场景并继续对话
     private IEnumerator LoadSceneAndContinue(SaveData saveData)
     {
-        // 处理Uduino以避免场景切换问题
-        if (Uduino.UduinoManager.Instance != null)
+        // 确保停止当前对话
+        if (dialogueRunner != null)
         {
-            Uduino.UduinoManager.Instance.isApplicationQuiting = true;
-            Uduino.UduinoManager.Instance.FullReset();
+            dialogueRunner.StopDialogue();
         }
 
-        // 加载场景
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(saveData.currentSceneName);
-
-        // 等待场景加载完成
-        while (!asyncLoad.isDone)
+        // 检查SceneContentManager是否存在
+        if (SceneContentManager.Instance == null)
         {
-            yield return null;
+            Debug.LogError("SceneContentManager不存在，无法切换场景内容");
+            yield break;
         }
 
-        // 更新当前场景名称
-        currentSceneName = saveData.currentSceneName;
+        // 记录当前应用的场景名称
+        string targetSceneName = saveData.currentSceneName;
+        string currentSceneName = SceneContentManager.Instance.GetCurrentSceneName();
 
-        // 重置Uduino的退出标志
-        if (Uduino.UduinoManager.Instance != null)
+        Debug.Log($"[场景切换] 当前场景: {currentSceneName}, 目标场景: {targetSceneName}, 节点: {saveData.currentNodeName}");
+
+        if (SceneContentManager.Instance.SceneExists(targetSceneName))
         {
-            Uduino.UduinoManager.Instance.isApplicationQuiting = false;
+            Debug.Log($"[场景切换] 场景 {targetSceneName} 存在，准备切换");
+        }
+        else
+        {
+            Debug.LogError($"[场景切换] 错误: 场景 {targetSceneName} 不存在!");
+            // 输出所有可用场景
+            string[] allScenes = SceneContentManager.Instance.GetAllSceneNames();
+            Debug.Log("[场景切换] 可用场景列表:");
+            foreach (var scene in allScenes)
+            {
+                Debug.Log($"- {scene}");
+            }
+            yield break;
         }
 
-        // 场景加载完成后，需要重新查找对话运行器
+        // 使用SceneContentManager切换场景内容
+        Debug.Log($"[场景切换] 正在调用SceneContentManager.ChangeScene({targetSceneName})");
+        SceneContentManager.Instance.ChangeScene(targetSceneName);
+
+        // 等待场景内容切换完成
+        yield return new WaitForSeconds(1.5f);
+
+        // 检查场景是否成功切换
+        string newCurrentSceneName = SceneContentManager.Instance.GetCurrentSceneName();
+        if (newCurrentSceneName == targetSceneName)
+        {
+            Debug.Log($"[场景切换] 成功: 当前场景已变为 {newCurrentSceneName}");
+        }
+        else
+        {
+            Debug.LogError($"[场景切换] 失败: 当前场景仍为 {newCurrentSceneName}，未能切换到 {targetSceneName}");
+            // 尝试强制再次切换
+            SceneContentManager.Instance.ChangeScene(targetSceneName);
+            yield return new WaitForSeconds(1.5f);
+        }
+
+        // 更新当前场景名称记录
+        this.currentSceneName = targetSceneName;
+
+        // 查找对话运行器
         dialogueRunner = FindObjectOfType<MinimalDialogueRunner>();
-
-        // 重新连接Uduino
-        if (UduinoSceneManager.Instance != null)
-        {
-            UduinoSceneManager.Instance.ReconnectUduino();
-        }
 
         if (dialogueRunner != null)
         {
             // 继续游戏
+            Debug.Log($"[场景切换] 准备在场景 {targetSceneName} 中继续对话节点: {saveData.currentNodeName}");
             ContinueFromSaveData(saveData);
         }
         else
         {
-            Debug.LogError($"加载场景后无法找到MinimalDialogueRunner");
+            Debug.LogError($"[场景切换] 错误: 场景切换后无法找到MinimalDialogueRunner");
         }
     }
 
@@ -321,7 +350,11 @@ public class SaveSystem : MonoBehaviour
             saveData.boolVariables
         );
 
-        Debug.Log($"从节点 '{saveData.currentNodeName}' 继续游戏");
+        // 先停止当前正在运行的对话
+        if (dialogueRunner.isRunning)
+        {
+            dialogueRunner.StopDialogue();
+        }
 
         // 从保存的节点开始对话
         dialogueRunner.StartDialogue(saveData.currentNodeName);
@@ -338,9 +371,6 @@ public class SaveSystem : MonoBehaviour
         {
             dialogueRunner.VariableStorage.Clear();
         }
-
-        // 重新加载初始场景
-        // SceneManager.LoadScene(0); // 加载构建设置中的第一个场景
     }
 
     // 4. 退出游戏
@@ -372,7 +402,6 @@ public class SaveSystem : MonoBehaviour
             try
             {
                 File.Delete(path);
-                Debug.Log("存档已删除");
             }
             catch (Exception e)
             {
@@ -479,13 +508,31 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
-    // 切换到指定场景和节点的YarnCommand
+    // 单场景版：切换到指定场景内容并跳转到指定节点的YarnCommand
     [YarnCommand("change_scene")]
     public static void ChangeSceneCommand(string sceneName, string nodeName)
     {
         if (Instance != null)
         {
-            Instance.ChangeScene(sceneName, nodeName);
+            // 创建临时数据以便在新场景内容中使用
+            SaveData tempData = new SaveData
+            {
+                currentNodeName = nodeName,
+                currentSceneName = sceneName,
+                saveDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+            };
+
+            // 获取当前所有变量
+            if (Instance.dialogueRunner != null && Instance.dialogueRunner.VariableStorage != null)
+            {
+                var (floats, strings, bools) = Instance.dialogueRunner.VariableStorage.GetAllVariables();
+                tempData.floatVariables = floats;
+                tempData.stringVariables = strings;
+                tempData.boolVariables = bools;
+            }
+
+            // 开始切换场景内容
+            Instance.StartCoroutine(Instance.LoadSceneAndStartDialogue(tempData));
         }
         else
         {
@@ -497,122 +544,105 @@ public class SaveSystem : MonoBehaviour
     [YarnCommand("next_scene")]
     public static void NextSceneCommand(string nodeName)
     {
-        if (Instance != null)
+        if (Instance != null && SceneContentManager.Instance != null)
         {
-            // 获取当前场景索引
-            int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
-            // 计算下一个场景索引
-            int nextSceneIndex = currentSceneIndex + 1;
+            string currentSceneName = SceneContentManager.Instance.GetCurrentSceneName();
+            string[] allScenes = SceneContentManager.Instance.GetAllSceneNames();
 
-            // 确保下一个场景索引有效
-            if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
+            // 查找当前场景在数组中的索引
+            int currentIndex = -1;
+            for (int i = 0; i < allScenes.Length; i++)
             {
-                string nextSceneName;
+                if (allScenes[i] == currentSceneName)
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
 
-#if UNITY_EDITOR
-                // 在编辑器中使用EditorSceneManager获取场景路径
-                string nextScenePath = UnityEditor.SceneManagement.EditorSceneManager.GetSceneByBuildIndex(nextSceneIndex).path;
-                nextSceneName = System.IO.Path.GetFileNameWithoutExtension(nextScenePath);
-#else
-                // 在运行时使用另一种方式
-                string nextScenePath = SceneUtility.GetScenePathByBuildIndex(nextSceneIndex);
-                nextSceneName = System.IO.Path.GetFileNameWithoutExtension(nextScenePath);
-#endif
-
-                // 切换到下一个场景
-                Instance.ChangeScene(nextSceneName, nodeName);
+            // 如果找到当前场景，尝试切换到下一个场景
+            if (currentIndex >= 0 && currentIndex < allScenes.Length - 1)
+            {
+                string nextSceneName = allScenes[currentIndex + 1];
+                ChangeSceneCommand(nextSceneName, nodeName);
             }
             else
             {
-                Debug.LogError($"没有下一个场景可以切换：当前场景索引 {currentSceneIndex}，场景总数 {SceneManager.sceneCountInBuildSettings}");
+                Debug.LogError($"没有下一个场景内容可以切换");
             }
         }
         else
         {
-            Debug.LogError("无法切换场景：SaveSystem实例不可用");
+            Debug.LogError("无法切换场景：SaveSystem或SceneContentManager实例不可用");
+        }
+    }
+
+    // 简化版场景切换命令，更方便在Yarn中使用
+    [YarnCommand("goto_scene")]
+    public static void GotoSceneCommand(string sceneName, string nodeName = "Start")
+    {
+        ChangeSceneCommand(sceneName, nodeName);
+    }
+
+    // 调试方法：打印所有场景信息
+    [YarnCommand("debug_scenes")]
+    public static void DebugScenesCommand()
+    {
+        if (Instance != null && SceneContentManager.Instance != null)
+        {
+            string[] allScenes = SceneContentManager.Instance.GetAllSceneNames();
+            string currentScene = SceneContentManager.Instance.GetCurrentSceneName();
+
+            Debug.Log("===== 场景调试信息 =====");
+            Debug.Log($"当前场景: {currentScene}");
+            Debug.Log("所有可用场景:");
+            foreach (var scene in allScenes)
+            {
+                Debug.Log($"- {scene}");
+            }
+            Debug.Log("=======================");
+        }
+        else
+        {
+            Debug.LogError("无法打印场景信息：SaveSystem或SceneContentManager实例不可用");
         }
     }
 
     #endregion
 
-    // 切换场景并开始指定节点的对话
-    public void ChangeScene(string sceneName, string nodeName)
-    {
-        if (string.IsNullOrEmpty(sceneName))
-        {
-            Debug.LogError("场景名称不能为空");
-            return;
-        }
-
-        if (string.IsNullOrEmpty(nodeName))
-        {
-            Debug.LogError("节点名称不能为空");
-            return;
-        }
-
-        // 创建临时数据以便在新场景中使用
-        SaveData tempData = new SaveData
-        {
-            currentNodeName = nodeName,
-            currentSceneName = sceneName,
-            saveDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
-        };
-
-        // 获取当前所有变量
-        if (dialogueRunner != null && dialogueRunner.VariableStorage != null)
-        {
-            var (floats, strings, bools) = dialogueRunner.VariableStorage.GetAllVariables();
-            tempData.floatVariables = floats;
-            tempData.stringVariables = strings;
-            tempData.boolVariables = bools;
-        }
-
-        // 开始加载新场景
-        StartCoroutine(LoadSceneAndStartDialogue(tempData));
-    }
-
     // 加载场景并自动开始对话
     private IEnumerator LoadSceneAndStartDialogue(SaveData data)
     {
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1f);
 
-        dialogueRunner.StopDialogue();
-
-        Debug.Log($"开始加载场景 {data.currentSceneName}，将在加载后3秒开始节点 {data.currentNodeName}");
-
-        // 处理Uduino以避免场景切换问题
-        if (Uduino.UduinoManager.Instance != null)
+        // 确保停止当前对话
+        if (dialogueRunner != null)
         {
-            Uduino.UduinoManager.Instance.isApplicationQuiting = true;
-            Uduino.UduinoManager.Instance.FullReset();
+            dialogueRunner.StopDialogue();
         }
 
-        // 加载场景
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(data.currentSceneName);
-
-        // 等待场景加载完成
-        while (!asyncLoad.isDone)
+        // 检查SceneContentManager是否存在
+        if (SceneContentManager.Instance == null)
         {
-            yield return null;
+            Debug.LogError("SceneContentManager不存在，无法切换场景内容");
+            yield break;
         }
+
+        // 记录当前应用的场景名称
+        string targetSceneName = data.currentSceneName;
+        Debug.Log($"开始切换到场景: {targetSceneName}, 节点: {data.currentNodeName}");
+
+        // 使用SceneContentManager切换场景内容
+        SceneContentManager.Instance.ChangeScene(targetSceneName);
+
+        // 等待场景内容切换完成
+        yield return new WaitForSeconds(1.5f);
 
         // 更新当前场景名称
-        currentSceneName = data.currentSceneName;
+        currentSceneName = targetSceneName;
 
-        // 重置Uduino的退出标志
-        if (Uduino.UduinoManager.Instance != null)
-        {
-            Uduino.UduinoManager.Instance.isApplicationQuiting = false;
-        }
-
-        // 场景加载完成后，需要重新查找对话运行器
+        // 查找对话运行器
         dialogueRunner = FindObjectOfType<MinimalDialogueRunner>();
-
-        // 重新连接Uduino
-        if (UduinoSceneManager.Instance != null)
-        {
-            UduinoSceneManager.Instance.ReconnectUduino();
-        }
 
         if (dialogueRunner != null)
         {
@@ -626,20 +656,27 @@ public class SaveSystem : MonoBehaviour
                 );
             }
 
-            // 等待3秒
-            Debug.Log("场景加载完成，等待1秒后开始对话");
-
             yield return new WaitForSeconds(1f);
 
-            SaveGame();
+            // 再次确保没有对话在运行
+            if (dialogueRunner.isRunning)
+            {
+                dialogueRunner.StopDialogue();
+            }
 
             // 开始对话
-            Debug.Log($"开始节点 {data.currentNodeName}");
+            Debug.Log($"在场景 {targetSceneName} 中开始对话节点: {data.currentNodeName}");
             dialogueRunner.StartDialogue(data.currentNodeName);
+
+            // 等待一小段时间，确保对话开始后再保存
+            yield return new WaitForSeconds(0.5f);
+
+            // 对话开始后再保存游戏状态
+            SaveGame();
         }
         else
         {
-            Debug.LogError($"加载场景后无法找到MinimalDialogueRunner");
+            Debug.LogError($"场景切换后无法找到MinimalDialogueRunner");
         }
     }
 }

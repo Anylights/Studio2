@@ -139,7 +139,16 @@ public class MinimalDialogueRunner : MonoBehaviour
         }
 
         dialogue.SetSelectedOption(optionIndex);
-        dialogue.Continue();
+
+        // 确保对话仍然在运行状态后再继续
+        if (isRunning)
+        {
+            dialogue.Continue();
+        }
+        else
+        {
+            Debug.Log("对话已不在运行状态，无法继续");
+        }
     }
 
     private void PrepareForLines(IEnumerable<string> lineIDs) { LineProvider.PrepareForLines(lineIDs); }

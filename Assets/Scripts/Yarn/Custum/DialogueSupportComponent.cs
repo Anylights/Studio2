@@ -36,16 +36,14 @@ public class DialogueSupportComponent : MonoBehaviour
         // 获取当前场景名称
         string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
 
-        // 如果当前场景是Begin，则检测按钮，开始对话
-        if (currentSceneName == "Begin")
+
+        // 修改：使用 Arduino 按钮开始对话
+        if (!runner.isRunning && (ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown) && !(ArduinoController.Instance.RedButtonDown && ArduinoController.Instance.GreenButtonDown))
         {
-            // 修改：使用 Arduino 按钮开始对话
-            if (!runner.isRunning && (ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown) && !(ArduinoController.Instance.RedButtonDown && ArduinoController.Instance.GreenButtonDown))
-            {
-                Debug.Log("Arduino button pressed, starting dialogue for the first time.");
-                runner.StartDialogue("Start");
-            }
+            Debug.Log("Arduino button pressed, starting dialogue for the first time.");
+            runner.StartDialogue("Start");
         }
+
 
 
     }
@@ -79,8 +77,15 @@ public class DialogueSupportComponent : MonoBehaviour
                 // 特殊处理：如果是play_timeline命令，不在这里继续对话
                 if (commandName != "play_timeline")
                 {
-                    // 在命令执行完毕后继续对话
-                    runner.Continue();
+                    // 在命令执行完毕后继续对话，但先检查对话是否在运行
+                    if (runner != null && runner.isRunning)
+                    {
+                        runner.Continue();
+                    }
+                    else
+                    {
+                        Debug.Log("对话已不在运行状态，无需继续");
+                    }
                 }
                 else
                 {
