@@ -37,7 +37,7 @@ public class SceneContentManager : MonoBehaviour
 
     [Header("场景内容")]
     [SerializeField] private List<SceneContent> sceneContents = new List<SceneContent>();
-    [SerializeField] private string initialSceneName = "Start";
+    [SerializeField] private string initialSceneName = "Start_Scene";
 
     [Header("过渡设置")]
     [SerializeField] private float transitionDuration = 1.0f;
@@ -47,10 +47,6 @@ public class SceneContentManager : MonoBehaviour
     // 场景变化事件
     public delegate void SceneChangeHandler(string previousScene, string newScene);
     public event SceneChangeHandler OnSceneChanged;
-
-    // 游戏事件
-    public delegate void GameEventHandler();
-    public event GameEventHandler OnGameStart;
 
     private Dictionary<string, GameObject> sceneMap = new Dictionary<string, GameObject>();
     private string currentSceneName;
@@ -72,8 +68,7 @@ public class SceneContentManager : MonoBehaviour
 
     private void Start()
     {
-        // 激活初始场景
-        ChangeScene(initialSceneName);
+        // 在这里不再自动激活初始场景，改为由GameManager控制初始场景
     }
 
     private void InitializeSceneMap()
@@ -226,50 +221,10 @@ public class SceneContentManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 启动游戏 - 将开始界面逻辑从DialogueSupportComponent移到这里
+    /// 获取初始场景名称
     /// </summary>
-    public void StartGame()
+    public string GetInitialSceneName()
     {
-        if (enableDebugLog) Debug.Log("准备启动游戏...");
-
-        // 触发游戏开始事件
-        OnGameStart?.Invoke();
-
-        // 其他可能需要的启动逻辑可以添加在这里
-    }
-
-    /// <summary>
-    /// 退出游戏
-    /// </summary>
-    public void QuitGame()
-    {
-        if (enableDebugLog) Debug.Log("退出游戏");
-
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
-    }
-
-    /// <summary>
-    /// Arduino按钮控制的游戏启动逻辑，从DialogueSupportComponent移动到这里
-    /// </summary>
-    private void Update()
-    {
-        // 如果需要Arduino按钮控制逻辑，可以在这里添加
-        // 如：判断按钮按下，触发游戏开始等
-        if (ArduinoController.Instance != null)
-        {
-            // 如果是开始界面且未处于过渡状态
-            if (currentSceneName == initialSceneName && !isTransitioning)
-            {
-                // 检测Arduino按钮按下
-                if (ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown)
-                {
-                    StartGame();
-                }
-            }
-        }
+        return initialSceneName;
     }
 }
