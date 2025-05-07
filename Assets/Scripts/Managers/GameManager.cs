@@ -267,18 +267,13 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void ChangeSceneAndStartDialogue(string sceneName, string nodeName)
     {
-        if (sceneManager == null)
-        {
-            Debug.LogError("无法切换场景：SceneContentManager不可用");
-            return;
-        }
+        StartCoroutine(StopDialogueWithDelay(0.6f, sceneName, nodeName));
 
-        if (dialogueRunner == null)
-        {
-            Debug.LogError("无法开始对话：MinimalDialogueRunner不可用");
-            return;
-        }
+    }
 
+    private IEnumerator StopDialogueWithDelay(float delay, string sceneName, string nodeName)
+    {
+        yield return new WaitForSeconds(delay);
         // 停止当前对话
         if (dialogueRunner.isRunning)
         {

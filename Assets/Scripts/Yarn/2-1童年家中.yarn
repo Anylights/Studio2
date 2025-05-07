@@ -1,0 +1,34 @@
+title: home
+tags:
+position: -197,-537
+---
+<<save_game>>
+<<play_timeline 0201>>
+<<play_sound "home" 1 true>>
+<<wait  3>>
+<<declare $num_to_reject = 0>>
+
+<<jump Telephone_loop>>
+===
+
+title: Telephone_loop
+---
+<<play_sound "telephone_ring" 1 true>>
+<<wait  1>>
+<<set_animation_bool "SmallZ" "IsLookingLeft" true>>
+    ->不接电话
+        <<set $num_to_reject = $num_to_reject + 1>>
+        <<set_animation_bool "SmallZ" "IsLookingLeft" false>>
+        <<stop_sound "telephone_ring">>
+        <<wait  2>>
+        <<jump Telephone_loop>>
+    ->接电话
+        <<play_timeline 0202>>
+        <<jump Get_telephone>>
+===
+
+title: Get_telephone
+---
+<<stop_sound "telephone_ring">>
+
+===

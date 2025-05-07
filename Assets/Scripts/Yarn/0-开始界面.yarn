@@ -1,0 +1,11 @@
+title: Start
+tags:
+position: -252,-511
+---
+-> 退出游戏
+    <<quit_game>>
+-> 开始游戏
+    <<start_game>>
+    <<stop_sound_fade "Start" 2>>
+    <<wait 1>>
+===

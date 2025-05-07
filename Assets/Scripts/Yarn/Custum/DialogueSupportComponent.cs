@@ -58,6 +58,44 @@ public class DialogueSupportComponent : MonoBehaviour
                 {
                     parameters = new object[commandText.Length - 1];
                     Array.Copy(commandText, 1, parameters, 0, commandText.Length - 1);
+
+                    // 获取方法参数信息
+                    var methodInfo = handler.Method;
+                    var paramInfos = methodInfo.GetParameters();
+
+                    // 转换参数类型
+                    for (int i = 0; i < parameters.Length; i++)
+                    {
+                        if (i < paramInfos.Length)
+                        {
+                            try
+                            {
+                                // 根据参数类型进行转换
+                                if (paramInfos[i].ParameterType == typeof(float))
+                                {
+                                    // 移除可能的引号
+                                    string paramStr = parameters[i].ToString().Trim('"');
+                                    parameters[i] = float.Parse(paramStr);
+                                }
+                                else if (paramInfos[i].ParameterType == typeof(bool))
+                                {
+                                    string paramStr = parameters[i].ToString().Trim('"');
+                                    parameters[i] = bool.Parse(paramStr);
+                                }
+                                else if (paramInfos[i].ParameterType == typeof(int))
+                                {
+                                    string paramStr = parameters[i].ToString().Trim('"');
+                                    parameters[i] = int.Parse(paramStr);
+                                }
+                                // 其他类型保持不变
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogError($"参数类型转换失败: {e.Message}, 参数值: {parameters[i]}, 目标类型: {paramInfos[i].ParameterType}");
+                                return;
+                            }
+                        }
+                    }
                 }
                 else
                 {

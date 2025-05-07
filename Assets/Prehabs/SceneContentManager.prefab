@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2239064457010555550
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1950023268841850061}
+  - component: {fileID: 6485560857462346552}
+  m_Layer: 0
+  m_Name: SceneContentManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1950023268841850061
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2239064457010555550}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.12391353, y: 0.5668962, z: 0.050881106}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6485560857462346552
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2239064457010555550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3c4e5ea43d9ddb4b98d0d73855e7703, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneContents:
+  - sceneName: Start_Scene
+    contentRoot: {fileID: 0}
+    initialState: 1
+  - sceneName: Level1_lab
+    contentRoot: {fileID: 0}
+    initialState: 0
+  - sceneName: Level2_home
+    contentRoot: {fileID: 0}
+    initialState: 0
+  initialSceneName: Start_Scene
+  transitionDuration: 1
+  transitionCanvas: {fileID: 0}
+  enableDebugLog: 1

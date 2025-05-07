@@ -1,0 +1,192 @@
+title: lab
+tags:
+position: -197,-537
+---
+<<play_sound "lab" 1 true>>
+<<play_sound "lab_noise" 1 true>>
+男研究员: 设备都准备好了吗？
+女研究员: 是的，都准备好了。
+// <<change_scene Start_Scene Start>>
+男研究员: 处理单元、分析单元、覆写单元都准备好了？
+女研究员: 都按要求调试好了。
+男研究员: 数据备份系统呢？这次实验的机会非常重要，任何数据都不能丢失。
+<<play_timeline 0100>>
+女研究员: 对不起，我马上去准备。
+<<play_timeline 0101>>
+男研究员: 先生，先生，您能听见我说话吗？
+    -> 不能。
+        男研究员: 您真是太幽默了，很高兴看到您在实验前还能这么放松。我们的实验马上开始。
+    -> 能。
+        男研究员: 好的，通讯系统正常。请您不要紧张，实验很快就开始。
+男研究员: 现在我们来做一下身份确认。
+<<declare $NotZ = false>>
+<<set $NotZ = false>>
+男研究员: 您的全名是叫埃里克·坎贝尔·Z，对吗？
+    -> 不是。
+        <<set $NotZ = true>>
+        男研究员: ...不是吗？但是您提供的身份资料都对的上,ID是不会骗人的。您确认您不是埃里克·坎贝尔·Z吗？
+        -> 不是。
+            男研究员: 那请问您的名字是？
+                -> 我没有名字
+                    男研究员: ...没关系，我们很快就知道您是谁了。
+                -> 布什·戈门
+                    男研究员: ···？
+                    男研究员: 您认真的吗？
+                        -> 是的。
+                           男研究员: 见鬼，<waitfor=0.5><shake a=0.5><notype>我才不会</notype> <waitfor=0.5><notype>相信这种</notype><waitfor=0.5><notype>低级的鬼话。</notype></shake>
+                        -> 不是。
+                           男研究员: ...
+                        男研究员: Z先生，我想您应该知道，我们没有时间再浪费了。
+                        男研究员: 实验马上开始，请您保持配合。
+        -> 是的。
+            男研究员: 好的。Z先生,您开了一个玩笑，但我希望您能在实验中保持配合。
+            男研究员: 因为这将是载入人类史册的实验。
+    -> 是的。
+        男研究员: 好的，Z先生。非常荣幸您能参与这次实验。这将是载入人类史册的实验。
+男研究员: 在此之前，请允许我再次向您重申我们的责任申明。
+
+<<declare $NotAgree = false>>
+<<declare $GiveUp = false>>
+男研究员: 您同意，我们以实验装置读取您的意识，并进行脑电波分析。
+    -> 我不同意。<<if $NotAgree == false>> 
+        男研究员: 您确认吗？如果您现在放弃，我们之前所有的合约都会失效。
+        男研究员: <color=red><shake a=0.5>包括我们谈判了很久才同意的报酬。</shake></color>
+        -> 我确认放弃。<<if $NotAgree == false>> 
+            <<set $NotAgree = true>>
+            <<jump Back>>
+        -> 我开玩笑的。
+            男研究员: Z先生。我想再强调一遍。
+            男研究员: <shake a=0.5><color=red><notype>我们</notype><waitfor=0.5><notype>真的</notype><waitfor=0.5><notype>没有</notype><waitfor=0.5><notype>时间</notype><waitfor=0.5><notype>再浪费了。</notype></shake></color>
+            <<set $NotAgree = true>>
+    -> 我同意。
+男研究员: 好的。您知情，实验中您会短暂失去对身体的控制。
+    -> 我不同意。<<if $NotAgree == false>> 
+        男研究员: 您确认吗？如果您现在放弃，我们之前所有的合约都会失效。
+        男研究员: <color=red><shake a=0.5>包括我们谈判了很久才同意的报酬。</shake></color>
+        -> 我确认放弃。<<if $NotAgree == false>> 
+            <<set $NotAgree = true>>
+            <<jump Back>>
+        -> 我开玩笑的。
+            男研究员: Z先生。我想再强调一遍。
+            男研究员: <shake a=0.5><color=red><notype>我们</notype><waitfor=0.5><notype>真的</notype><waitfor=0.5><notype>没有</notype><waitfor=0.5><notype>时间</notype><waitfor=0.5><notype>再浪费了。</notype></shake></color>
+            <<set $NotAgree = true>>
+    -> 我同意。
+男研究员: 好的。最后，您同意，您将承担实验可能带来的所有后果。
+    -> 我不同意。<<if $NotAgree == false>> 
+        男研究员: 您确认吗？如果您现在放弃，我们之前所有的合约都会失效。
+        男研究员: <color=red><shake a=0.5>包括我们谈判了很久才同意的报酬。</shake></color>
+        -> 我确认放弃。<<if $NotAgree == false>> 
+            <<set $NotAgree = true>>
+            <<jump Back>>
+        -> 我开玩笑的。
+            男研究员: Z先生。我想再强调一遍。
+            男研究员: <shake a=0.5><color=red><notype>我们</notype><waitfor=0.5><notype>真的</notype><waitfor=0.5><notype>没有</notype><waitfor=0.5><notype>时间</notype><waitfor=0.5><notype>再浪费了。</notype></shake></color>
+            <<set $NotAgree = true>>
+    -> 我同意。
+男研究员: 好的。非常感谢您的配合。
+
+<<play_timeline 0102>>
+
+女研究员: 数据备份系统已就绪。另外，写入系统也已完成调试。
+男研究员: 好。做最后的检查。
+    -> 等等!!!
+        男研究员:先生，你不会是现在又想反悔吧？
+            ->我们没有说过写入系统。
+            ->我拒绝被修改！
+    -> 写入系统??!?
+男研究员: 先生，这涉及我们的实验机密。
+男研究员: 您同意过的，您不会过问实验的具体内容。
+    -> 放我下来
+    -> 我不干了
+男研究员: 先生，请您冷静。我们会做到我们的承诺。
+    ->坚定拒绝
+        女研究员: 博士，现在怎么办？
+        男研究员: 马上开始实验，我们只有这一次机会。
+        女研究员: 收到。
+    ->保持沉默
+        男研究员: 感谢您的配合. 请您放心，您不会受到任何伤害。
+        男研究员: 准备开始实验。
+        女研究员: 收到。
+<<stop_sound_fade "lab" 2>>
+<<stop_sound_fade "lab_noise" 2>>
+<<play_timeline  0103>>
+<<change_scene Level2_home home>>
+===
+
+
+
+title: Back
+position: 95,-216
+---
+// 检查是否是从存档返回
+<<if $GiveUp == true>>
+<<play_timeline 0101>>
+    男研究员: ...
+    男研究员: Z先生。
+    男研究员: 我很奇怪您为什么会做出这样的选择。
+    男研究员: 我是说，您怎么又回来了？
+    <<play_sound "lab" 1 true>>
+    <<play_sound "lab_noise" 1 true>>
+    <<play_timeline 0100>>
+<<else>>
+    男研究员: ...
+    男研究员: Z先生。
+    男研究员: 我很奇怪您为什么会做出这样的选择。
+    
+    <<set $GiveUp = true>>
+    
+    <<if $NotZ == true>> 
+        男研究员: 您让我觉得，您似乎真的不是埃里克·坎贝尔·Z。
+    <<endif>>
+    
+    男研究员: ...但我们还是尊重您的选择。
+    男研究员: 再见。
+    
+    // 保存游戏状态，这样下次加载时会进入上面的分支
+    <<save_game>>
+    
+    // 退出游戏
+    <<quit_game>>
+<<endif>>
+
+    -> 我只是在逗你玩
+        男研究员:...
+        男研究员: 先生，<waitfor=0.5>请允许我 <color=red><waitfor=0.5><shake a=0.5><notype>最后</notype> <waitfor=0.5><notype>最后</notype> <waitfor=0.5><notype> 最后</notype> <waitfor=0.5><notype> 再重申一遍</notype></shake></color>
+        男研究员:  <shake a=0.5><color=red><notype>我们</notype><waitfor=0.5><notype>真的</notype><waitfor=0.5><notype>没有</notype><waitfor=0.5><notype>时间</notype><waitfor=0.5><notype>再浪费了。</notype></shake></color>
+        男研究员: ...<waitfor=0.5>  <color=red><shake a=0.5>我的耐心是有极限的。</shake></color>
+    -> 对不起，我需要钱
+        男研究员: ...我理解，先生。
+        男研究员: 但您演这一出又是何必呢？
+        男研究员: 你是在寻找彩蛋吗？
+        男研究员: 抱歉，<wave><rainb>复活节还远得很呢。</rainb></wave>
+
+<<play_timeline 0102>>
+
+女研究员: 数据备份系统已就绪。另外，写入系统也已完成调试。
+男研究员: 好。做最后的检查。
+    -> 等等!!!
+        男研究员:先生，你不会是现在又想反悔吧？
+            ->我们没有说过写入系统。
+            ->我拒绝被修改！
+    -> 写入系统??!?
+男研究员: 先生，这涉及我们的实验机密。
+男研究员: 您同意过的，您不会过问实验的具体内容。
+    -> 放我下来
+    -> 我不干了
+男研究员: 先生，请您冷静。我们会做到我们的承诺。
+    ->坚定拒绝
+        女研究员: 博士，现在怎么办？
+        男研究员: 马上开始实验，我们只有这一次机会。
+        女研究员: 收到。
+    ->保持沉默
+        男研究员: 感谢您的配合. 请您放心，您不会受到任何伤害。
+        男研究员: 准备开始实验。
+        女研究员: 收到。
+<<stop_sound_fade "lab" 2>>
+<<stop_sound_fade "lab_noise" 2>>
+<<play_timeline  0103>>
+<<change_scene Level2_home home>>
+===
+
+
+

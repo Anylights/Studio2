@@ -383,6 +383,7 @@ public class MinimalOptionsView : MonoBehaviour
         // 标记选择进行中
         selectionInProgress = true;
         optionsActive = false;
+        AudioManager.Instance.PlaySound("option_selected", 1f, false);
 
         // 触发选项隐藏事件
         OnOptionsHidden?.Invoke();
@@ -433,8 +434,6 @@ public class MinimalOptionsView : MonoBehaviour
         yield return new WaitForSeconds(selectionDelay);
 
 
-
-
         if (runner.isRunning && selectedOptionID >= 0)
         {
             if (enableDebugLog)
@@ -450,14 +449,13 @@ public class MinimalOptionsView : MonoBehaviour
         }
 
 
-
-
         // 重置标志，以允许将来的选择
         selectionInProgress = false;
 
         // 触发选择完成事件
         OnSelectionComplete?.Invoke(optionIndex);
         EventCenter.Instance.TriggerEvent<int>("optionSelectionComplete", optionIndex);
+
     }
 
     // 获取上次选择的选项索引
