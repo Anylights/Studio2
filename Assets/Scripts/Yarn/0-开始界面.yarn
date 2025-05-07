@@ -2,6 +2,7 @@ title: Start
 tags:
 position: -252,-511
 ---
+<<wait 1>>
 -> 退出游戏
     <<quit_game>>
 -> 开始游戏

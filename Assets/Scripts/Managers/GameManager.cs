@@ -119,7 +119,7 @@ public class GameManager : MonoBehaviour
             ArduinoController.Instance != null)
         {
             // 检测按钮按下
-            if (ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown)
+            if ((ArduinoController.Instance.RedButtonDown || ArduinoController.Instance.GreenButtonDown) && !(ArduinoController.Instance.RedButtonDown && ArduinoController.Instance.GreenButtonDown))
             {
                 if (enableDebugLog) Debug.Log("按钮按下，准备开始游戏");
                 StartStartScreenDialogue();

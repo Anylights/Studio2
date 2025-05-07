@@ -13,7 +13,7 @@ position: -197,-537
 
 title: Telephone_loop
 ---
-<<play_sound "telephone_ring" 1 true>>
+<<play_sound "telephone_ring" 0.5 true>>
 <<wait  1>>
 <<set_animation_bool "SmallZ" "IsLookingLeft" true>>
     ->不接电话
@@ -23,12 +23,97 @@ title: Telephone_loop
         <<wait  2>>
         <<jump Telephone_loop>>
     ->接电话
+        <<set_animation_bool "SmallZ" "IsLookingLeft" false>>
         <<play_timeline 0202>>
         <<jump Get_telephone>>
 ===
 
 title: Get_telephone
 ---
+<<set_animation_bool "SmallZ" "IsStanding" true>>
 <<stop_sound "telephone_ring">>
+<<play_sound "phone_up" 1 false>>
+    ->...
+    ->喂？
+<<if $num_to_reject > 0 && $num_to_reject < 2>>
+    父亲:为什么不接我的电话？
+        ->就是不想接
+            父亲: ...
+            父亲: 埃里克，<shake a=0.5><notype>你小子是不是欠揍？</notype></shake>
+            父亲: 等我回来再收拾你。
+        ->我在写作业
+            父亲: 你觉得我会信吗？
+                ->你为什么不信
+                ->我真的在写
+                父亲:哼，你要是真在写，我就不会接到那么多从你学校打来的电话！
+<<elseif $num_to_reject > 3>>
+    父亲: 你他妈是腿断了还是耳朵聋了？
+    父亲: 你知道我打了多少个电话吗？   
+        ->{$num_to_reject + 1}个
+            父亲: 好，看起来你小子数学还不错啊？
+            父亲: 那你他妈的可以把你他妈的作业给我写了吗？
+            父亲: 我已经受够了从你学校打来的电话了。
+        ->我不知道
+            父亲: 埃里克，<shake a=0.5> <color=red>我警告你不要挑战我的底线。<shake a=0.5> <color=red>
+
+<<else>>
+父亲: 臭小子，怎么这么久才接电话？
+<<endif>>
+
+父亲: 听好了，今晚工厂加班，不回来。
+父亲: 你自己乖乖留在家里，不准出门。
+父亲: 如果隔壁那个烦人的小兔崽子又跑过来，不准让他在我的沙发上打滚。
+父亲: 晚饭自己做，别饿死了。
+父亲: 还有一件事，
+父亲: 如果再因为你没有写作业，学校的电话打到我这里来，
+父亲: <shake a=0.5> <color=red> <notype>我一定好好收拾你。</notype> <shake a=0.5> <color=red>
+<<play_sound "phone_down" 1 false>>
+
+<<wait 3>>
+<<set_animation_bool "SmallZ" "IsStanding" false>>
+<<play_timeline 0203>>
+
+<<wait  2>>
+（要写作业吗？）
+    ->不写
+        <<wait  5>>
+        （真的决定不写作业吗？）
+            ->真的
+                <<wait  5>>
+                （这样真的可以吗？）
+                    ->就是不写
+                        <<wait  5>>
+                        （要不还是写一下吧）
+                            ->不
+                                <<wait  5>>
+                                （其实这样没有好的下场吧）
+                                    ->不管
+                                        <<wait  5>>
+                                        （你这样会后悔的）
+                                            ->我不后悔
+                                                <<wait  5>>
+                                                <<play_timeline  0204>>
+                                                <<wait  3>>
+                                                （写作业。）
+                                                    ->好的
+                                                    ->好的
+                                                <<jump do_homework>>
+                                            ->好吧，我认输了
+                                                <<jump do_homework>>
+                                    ->好吧，写一下
+                                        <<jump do_homework>>
+                            ->好吧
+                                <<jump do_homework>>
+                    ->还是写一下吧
+                        <<jump do_homework>>
+            ->还是写一下吧
+                <<jump do_homework>>
+    ->写
+        <<jump do_homework>>
+===
+
+title: do_homework
+---
+<<play_timeline 0205>>
 
 ===
