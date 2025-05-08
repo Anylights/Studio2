@@ -3,8 +3,22 @@ tags:
 position: -252,-511
 ---
 <<wait 1>>
--> 退出游戏
-    <<quit_game>>
+-> 更多的选项
+    -> 一些重要的信息
+        按ESC键可以随时退出游戏。
+        但是您的进度可能不会被保存。
+        感谢您的游玩，请善待我的设备。
+        -> 回到主界面
+            <<jump Start>>
+        -> 回到主界面
+            <<jump Start>>
+    -> 重置存档
+        确定要重置存档吗？
+        -> 否
+        -> 是
+            <<reset_game>>
+            已重置。
+        <<jump Start>>
 -> 开始游戏
     <<start_game>>
     <<stop_sound_fade "Start" 2>>

@@ -113,6 +113,15 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        // 检测ESC键退出游戏
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
         // 检测Arduino按钮输入（仅在开始场景时）
         if (!isGameStarted && sceneManager != null &&
             sceneManager.GetCurrentSceneName() == startSceneName &&

@@ -335,13 +335,6 @@ public class SaveSystem : MonoBehaviour
         if (Instance != null)
         {
             Instance.ResetGame();
-
-            // 查找并通知GameManager重置游戏
-            var gameManager = FindObjectOfType<GameManager>();
-            if (gameManager != null)
-            {
-                gameManager.StartNewGame();
-            }
         }
         else
         {
