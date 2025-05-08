@@ -210,8 +210,13 @@ position: 428,200
 小孩:还有好多好多的人。
 小孩:他们都在沙滩上晒太阳，
 小孩:还有人在海里游泳。
-<<set_animation_bool "SmallZ" "IsLookingLeft" false>>
-小孩:哥哥，你见过大海吗？
+<<declare $canswim = false>>
+小孩:哥哥，你会游泳吗？
+    ->不会
+        <<set $canswim = false>>
+    ->会    
+        <<set $canswim = true>>
+小孩:那你见过大海吗？
     ->我没兴趣
     ->那里很危险
 <<play_timeline 0207>>

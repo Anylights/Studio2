@@ -15,6 +15,11 @@ public class MinimalOptionsView : MonoBehaviour
     [SerializeField] private float selectionDelay = 0.5f; // 选择选项后的延迟时间
     [SerializeField] private bool enableDebugLog = true;
 
+    [Header("输入设置")] // 添加一个新的Header以便在Inspector中分类
+    [Tooltip("选项显示后，输入开始响应前的额外冷却时间（秒）")]
+    [SerializeField] private float optionDisplayInputCooldown = 0.1f;
+    private float blockInputUntilTime = 0f; // 输入将被阻塞直到这个时间点
+
     // 每个选项UI对应的组件缓存
     private List<TextMeshProUGUI> optionTextComponents = new List<TextMeshProUGUI>();
     private List<CanvasGroup> optionCanvasGroups = new List<CanvasGroup>();
@@ -124,6 +129,12 @@ public class MinimalOptionsView : MonoBehaviour
 
     private void Update()
     {
+        // 在处理任何输入之前，检查是否在输入阻塞期
+        if (Time.time < blockInputUntilTime)
+        {
+            return; // 如果在阻塞期，则不处理任何输入
+        }
+
         // 如果选项不活跃或者选择正在进行中，不处理输入
         if (!optionsActive || selectionInProgress) return;
 
@@ -172,19 +183,21 @@ public class MinimalOptionsView : MonoBehaviour
         // 如果有进行中的选择，先取消
         if (selectionInProgress)
         {
-            StopAllCoroutines();
+            StopAllCoroutines(); // 确保停止所有相关协程，例如FadeOutAllOptions和DelayedOptionSelection
             selectionInProgress = false;
+            // 如果之前的选择正在淡出，确保它们被立即隐藏
+            HideAllOptions(false);
         }
 
         currentOptions = options;
         availableOptionIndices.Clear();
-        optionsActive = true;
+        optionsActive = true; // 选项现在处于活动状态，准备显示
 
         // 触发选项显示事件
         OnOptionsShown?.Invoke();
 
-        // 隐藏所有选项UI
-        HideAllOptions(false); // 立即隐藏，不使用淡出效果
+        // 立即隐藏所有旧选项UI，以防万一 (之前可能已在StopAllCoroutines后处理，但双重保险)
+        HideAllOptions(false);
 
         // 为每个选项设置UI
         int availableCount = 0;
@@ -247,6 +260,9 @@ public class MinimalOptionsView : MonoBehaviour
 
         // 淡入显示所有选项
         StartCoroutine(FadeInOptions(uiIndices));
+
+        // 设置输入阻塞期：覆盖淡入时间和额外的冷却时间
+        blockInputUntilTime = Time.time + fadeTime + optionDisplayInputCooldown;
 
         if (enableDebugLog)
         {
@@ -379,6 +395,10 @@ public class MinimalOptionsView : MonoBehaviour
             }
             return;
         }
+
+        // 当一个选项被选择时，我们认为输入阻塞期可以结束了（如果有的话）。
+        // 主要的阻塞目的是防止RunOptions后立即选择，一旦选择发生，此特定阻塞解除。
+        blockInputUntilTime = Time.time;
 
         // 标记选择进行中
         selectionInProgress = true;

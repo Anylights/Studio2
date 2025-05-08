@@ -1,4 +1,52 @@
 title: seaside
 ---
+<<save_game>>
+<<play_sound "sea_rain" 1 true>>
+<<play_sound "sea_background" 1 true>>
+<<play_timeline 0301>>
 
+<<wait  1>>
+小孩:哥哥！
+    ->赶紧回来！
+    ->你跑到那里干什么？
+        小孩:这里有好看的贝壳...
+            ->别管什么贝壳了
+            ->赶紧回来
+小孩:哥哥，我被困在这里了
+小孩:我一不小心就玩过了时间...然后就涨潮了
+小孩:哥哥，救救我！
+<<declare $ZiZuoZiShou = false>>
+-> 你自作自受
+    <<set $ZiZuoZiShou = true>>
+    小孩:哥哥！！
+    小孩:救救我！！！
+        -> 冒险涉水<<if $canswim == true>>
+            <<play_timeline 0302>>
+            <<wait 2>>
+            小孩:哥哥！
+            <<play_timeline 0303>>
+            （不，浪太高了）
+        -> 寻找救援
+-> 冒险涉水<<if $canswim == true>>
+    <<play_timeline 0302>>
+    <<wait 2>>
+    小孩:哥哥！
+    <<play_timeline 0303>>
+    （不，浪太高了）
+        ->冒险涉水<<if $canswim == false>>
+        ->寻找救援
+我去找人来救你！
+<<play_timeline 0304>>
+
+<<wait  3>>
+<<play_timeline 0305>>
+小孩:哥哥...
+<<wait  3>>
+<<play_timeline 0306>>
+
+<<wait  1>>
+<<stop_sound_fade "sea_background" 2>>
+<<stop_sound_fade "sea_rain" 2>>
+
+<<change_scene Level4_lab mid-lab-1>>
 ===
