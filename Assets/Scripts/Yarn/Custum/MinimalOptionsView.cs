@@ -447,12 +447,39 @@ public class MinimalOptionsView : MonoBehaviour
             yield break;
         }
 
-        // 先淡出所有选项
-        yield return StartCoroutine(FadeOutAllOptions());
+        // 立即隐藏所有其他选项，只保留被选择的选项
+        for (int i = 0; i < optionUIObjects.Count; i++)
+        {
+            if (i != optionIndex && optionUIObjects[i] != null)
+            {
+                optionUIObjects[i].SetActive(false);
+            }
+        }
+
+        // 让被选择的选项闪烁0.5秒
+        float flashStartTime = Time.time;
+        float flashDuration = 0.5f;
+        float flashInterval = 0.1f; // 闪烁间隔
+        bool isVisible = true;
+
+        while (Time.time - flashStartTime < flashDuration)
+        {
+            if (optionUIObjects[optionIndex] != null)
+            {
+                isVisible = !isVisible;
+                optionUIObjects[optionIndex].SetActive(isVisible);
+            }
+            yield return new WaitForSeconds(flashInterval);
+        }
+
+        // 确保选项最后是隐藏的
+        if (optionUIObjects[optionIndex] != null)
+        {
+            optionUIObjects[optionIndex].SetActive(false);
+        }
 
         // 等待额外的时间让Arduino完成脉冲效果
         yield return new WaitForSeconds(selectionDelay);
-
 
         if (runner.isRunning && selectedOptionID >= 0)
         {
@@ -468,14 +495,12 @@ public class MinimalOptionsView : MonoBehaviour
             Debug.LogWarning($"对话运行器状态异常，无法选择选项: runner.isRunning={runner?.isRunning}, selectedOptionID={selectedOptionID}");
         }
 
-
         // 重置标志，以允许将来的选择
         selectionInProgress = false;
 
         // 触发选择完成事件
         OnSelectionComplete?.Invoke(optionIndex);
         EventCenter.Instance.TriggerEvent<int>("optionSelectionComplete", optionIndex);
-
     }
 
     // 获取上次选择的选项索引
