@@ -1,4 +1,4 @@
-title: mid-lab-1
+title: mid_lab_1
 ---
 <<save_game>>
 <<play_sound "lab" 1 true>>
@@ -32,12 +32,6 @@ title: mid-lab-1
 <<play_timeline 0403>>
 <<wait 2>>
 
-制作人：@Anylight
-美术：@许晴 @阳熙玉 @李雨陶
-编剧：@Tori
-音乐：@斓梦语
-
-未完待续，游戏仍在开发中，欢迎加入玩家群。
 
 <<wait 2>>
 <<quit_game>>

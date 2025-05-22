@@ -16,17 +16,6 @@ title: seaside
 小孩:我一不小心就玩过了时间...然后就涨潮了
 小孩:哥哥，救救我！
 <<declare $ZiZuoZiShou = false>>
--> 你自作自受
-    <<set $ZiZuoZiShou = true>>
-    小孩:哥哥！！
-    小孩:救救我！！！
-        -> 冒险涉水<<if $canswim == true>>
-            <<play_timeline 0302>>
-            <<wait 2>>
-            小孩:哥哥！
-            <<play_timeline 0303>>
-            （不，浪太高了）
-        -> 寻找救援
 -> 冒险涉水<<if $canswim == true>>
     <<play_timeline 0302>>
     <<wait 2>>
@@ -35,7 +24,13 @@ title: seaside
     （不，浪太高了）
         ->冒险涉水<<if $canswim == false>>
         ->寻找救援
-我去找人来救你！
+    我去找人来救你！
+-> 你自作自受
+    <<set $ZiZuoZiShou = true>>
+    小孩:！！！！！！！！！！
+    小孩:哥哥！！！
+    小孩:救救我！！！！！！！
+    我才不管你的死活
 <<play_timeline 0304>>
 
 <<wait  3>>
@@ -48,5 +43,5 @@ title: seaside
 <<stop_sound_fade "sea_background" 2>>
 <<stop_sound_fade "sea_rain" 2>>
 
-<<change_scene Level4_lab mid-lab-1>>
+<<change_scene Level4_lab mid_lab_1>>
 ===
