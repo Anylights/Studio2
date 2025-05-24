@@ -3,6 +3,9 @@ tags:
 position: -252,-511
 ---
 <<wait 1>>
+<<set_option_colors "#FF0000" "#FF0000">>
+<<set_button_mapping 0 0>> // 红按钮选择选项0，绿按钮选择选项1 (默认设置)
+// <<set_pulse_effect "rainbow">> // 设置脉冲效果为彩虹效果
 -> 更多的选项
     -> 一些重要的信息
         按ESC键可以随时退出游戏。

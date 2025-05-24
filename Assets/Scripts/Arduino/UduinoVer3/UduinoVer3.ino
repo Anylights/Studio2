@@ -7,7 +7,7 @@
 #define LED_COUNT 52 // 每个灯带的灯珠数量
 
 // 添加脉冲效果参数设置
-#define PULSE_DURATION 200  // 脉冲效果持续时间(毫秒)
+#define PULSE_DURATION 200   // 脉冲效果持续时间(毫秒)
 #define PULSE_TAIL_LENGTH 25 // 脉冲效果的尾部长度
 
 // 创建两个灯带对象
@@ -50,10 +50,10 @@ void setup()
   uduino.addCommand("b", ReadBundle);
   uduino.addInitFunction(DisconnectAllServos);
   uduino.addDisconnectedFunction(DisconnectAllServos);
-  uduino.addCommand("SetColor", SetColor);                     // 设置所有灯带相同颜色
-  uduino.addCommand("SetStripColor", SetStripColor);           // 设置指定灯带的颜色
-  uduino.addCommand("SetPixelColor", SetPixelColor);           // 设置指定灯带指定灯珠的颜色
-  uduino.addCommand("PulseEffect", PulseEffect);               // 添加脉冲效果命令
+  uduino.addCommand("SetColor", SetColor);           // 设置所有灯带相同颜色
+  uduino.addCommand("SetStripColor", SetStripColor); // 设置指定灯带的颜色
+  uduino.addCommand("SetPixelColor", SetPixelColor); // 设置指定灯带指定灯珠的颜色
+  uduino.addCommand("PulseEffect", PulseEffect);     // 添加脉冲效果命令
   // uduino.addCommand("DefaultPulseEffect", DefaultPulseEffect); // 添加默认脉冲效果命令
 
   uduino.addDisconnectedFunction(uduinoDisconnect);
@@ -397,7 +397,7 @@ void uduinoDisconnect()
   Serial.println("连接断开，已关闭所有灯带");
 }
 
-// 实现脉冲效果
+// 修改PulseEffect函数定义，添加效果类型参数和颜色参数
 void PulseEffect()
 {
   char *arg = NULL;
@@ -406,14 +406,50 @@ void PulseEffect()
   arg = uduino.next();
   int stripIndex = (arg != NULL) ? atoi(arg) : 0;
 
-  // 选择对应的灯带和颜色
+  // 获取效果类型
+  arg = uduino.next();
+  String effectType = (arg != NULL) ? String(arg) : "default";
+
+  // 获取RGB颜色值
+  arg = uduino.next();
+  int r = (arg != NULL) ? atoi(arg) : 255;
+
+  arg = uduino.next();
+  int g = (arg != NULL) ? atoi(arg) : 0;
+
+  arg = uduino.next();
+  int b = (arg != NULL) ? atoi(arg) : 0;
+
+  // 选择对应的灯带
   Adafruit_NeoPixel &strip = (stripIndex == 1) ? strip2 : strip1;
 
-  // 设置脉冲颜色 - 与Unity中的设置对应
-  // stripIndex == 0 对应红色，stripIndex == 1 对应绿色
-  int r = (stripIndex == 0) ? 255 : 0; // 红色
-  int g = (stripIndex == 1) ? 255 : 0; // 绿色
-  int b = 30;                           // 蓝色为0
+  // 根据效果类型选择不同的实现
+  if (effectType == "rainbow")
+  {
+    // 彩虹效果
+    RainbowPulseEffect(strip);
+  }
+  else if (effectType == "bounce")
+  {
+    // 弹跳效果
+    BouncePulseEffect(strip);
+  }
+  else if (effectType == "flash")
+  {
+    // 闪烁效果
+    FlashPulseEffect(strip);
+  }
+  else
+  {
+    // 默认效果，传递接收到的颜色参数
+    DefaultPulseEffect(strip, stripIndex, r, g, b);
+  }
+}
+
+// 将原始PulseEffect代码移动到这个函数
+void DefaultPulseEffect(Adafruit_NeoPixel &strip, int stripIndex, int r, int g, int b)
+{
+  // 直接使用传入的RGB颜色值
 
   // 先关闭所有灯珠
   for (int i = 0; i < LED_COUNT; i++)
@@ -448,11 +484,11 @@ void PulseEffect()
         float intensity = 1.0f - ((float)j / PULSE_TAIL_LENGTH);
 
         // 应用亮度到RGB值
-        int adjustedR = r * intensity;
-        int adjustedG = g * intensity;
-        int adjustedB = b * intensity;
+        int finalR = r * intensity;
+        int finalG = g * intensity;
+        int finalB = b * intensity;
 
-        strip.setPixelColor(pixelIndex, adjustedR, adjustedG, adjustedB);
+        strip.setPixelColor(pixelIndex, finalR, finalG, finalB);
       }
     }
 
@@ -467,86 +503,140 @@ void PulseEffect()
   }
   strip.show();
 
-  // 恢复默认颜色 (白色)
+  // 恢复默认颜色
   delay(100); // 短暂延迟以明确区分效果
   for (int i = 0; i < LED_COUNT; i++)
   {
-    strip1.setPixelColor(i,50,50,50);
-    strip2.setPixelColor(i,50,50,50);
+    strip1.setPixelColor(i, 50, 50, 50);
+    strip2.setPixelColor(i, 50, 50, 50);
   }
   strip1.show();
   strip2.show();
 }
 
-// // 实现默认脉冲效果 - 用于按钮按下时
-// void DefaultPulseEffect()
-// {
+// 添加彩虹效果
+void RainbowPulseEffect(Adafruit_NeoPixel &strip)
+{
+  // 清除灯带
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    strip.setPixelColor(i, 0, 0, 0);
+  }
+  strip.show();
 
-//   // 添加调试输出
-//   Serial.println("执行DefaultPulseEffect");
-//   char *arg = NULL;
+  // 彩虹效果实现
+  for (int j = 0; j < 3; j++)
+  { // 重复3次
+    for (int i = 0; i < 256; i += 5)
+    { // 加快速度，每次跳过5个颜色值
+      for (int p = 0; p < LED_COUNT; p++)
+      {
+        // 使用wheel函数产生彩虹色
+        strip.setPixelColor(p, Wheel((i + p) & 255));
+      }
+      strip.show();
+      delay(5);
+    }
+  }
 
-//   // 获取按钮/灯带索引（0或1）
-//   arg = uduino.next();
-//   int stripIndex = (arg != NULL) ? atoi(arg) : 0;
+  // 恢复默认颜色
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    strip1.setPixelColor(i, 50, 50, 50);
+    strip2.setPixelColor(i, 50, 50, 50);
+  }
+  strip1.show();
+  strip2.show();
+}
 
-//   // 选择对应的灯带
-//   Adafruit_NeoPixel &strip = (stripIndex == 1) ? strip2 : strip1;
+// 弹跳效果
+void BouncePulseEffect(Adafruit_NeoPixel &strip)
+{
+  // 清除灯带
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    strip.setPixelColor(i, 0, 0, 0);
+  }
+  strip.show();
 
-//   // 设置默认的青色 (0, 128, 128)
-//   int r = 0;
-//   int g = 128;
-//   int b = 128;
+  // 弹跳效果实现
+  for (int j = 0; j < 3; j++)
+  { // 重复3次
+    // 正向
+    for (int i = 0; i < LED_COUNT; i++)
+    {
+      strip.clear();
+      strip.setPixelColor(i, 0, 255, 255);
+      strip.show();
+      delay(10);
+    }
 
-//   // 先关闭所有灯珠
-//   for (int i = 0; i < LED_COUNT; i++)
-//   {
-//     strip.setPixelColor(i, 0, 0, 0);
-//   }
-//   strip.show();
+    // 反向
+    for (int i = LED_COUNT - 1; i >= 0; i--)
+    {
+      strip.clear();
+      strip.setPixelColor(i, 0, 255, 255);
+      strip.show();
+      delay(10);
+    }
+  }
 
-//   // 计算每个灯珠的延迟时间 - 使用更短的持续时间
-//   int delayPerLed = (PULSE_DURATION / 2) / LED_COUNT;
+  // 恢复默认颜色
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    strip1.setPixelColor(i, 50, 50, 50);
+    strip2.setPixelColor(i, 50, 50, 50);
+  }
+  strip1.show();
+  strip2.show();
+}
 
-//   // 执行脉冲效果 - 带尾部的流动效果
-//   for (int i = 0; i < LED_COUNT + PULSE_TAIL_LENGTH; i++)
-//   {
-//     // 清除所有LED
-//     for (int j = 0; j < LED_COUNT; j++)
-//     {
-//       strip.setPixelColor(j, 0, 0, 0);
-//     }
+// 闪烁效果
+void FlashPulseEffect(Adafruit_NeoPixel &strip)
+{
+  // 闪烁效果实现
+  for (int j = 0; j < 5; j++)
+  {
+    // 全亮
+    for (int i = 0; i < LED_COUNT; i++)
+    {
+      strip.setPixelColor(i, 255, 255, 255);
+    }
+    strip.show();
+    delay(100);
 
-//     // 设置"尾巴"的每个LED
-//     for (int j = 0; j < PULSE_TAIL_LENGTH; j++)
-//     {
-//       int pixelIndex = i - j;
+    // 全灭
+    for (int i = 0; i < LED_COUNT; i++)
+    {
+      strip.setPixelColor(i, 0, 0, 0);
+    }
+    strip.show();
+    delay(100);
+  }
 
-//       // 确保像素索引在有效范围内
-//       if (pixelIndex >= 0 && pixelIndex < LED_COUNT)
-//       {
-//         // 根据在尾部的位置计算亮度 - 使用较低亮度
-//         float intensity = 0.8f * (1.0f - ((float)j / PULSE_TAIL_LENGTH));
+  // 恢复默认颜色
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    strip1.setPixelColor(i, 50, 50, 50);
+    strip2.setPixelColor(i, 50, 50, 50);
+  }
+  strip1.show();
+  strip2.show();
+}
 
-//         // 应用亮度到RGB值
-//         int adjustedR = r * intensity;
-//         int adjustedG = g * intensity;
-//         int adjustedB = b * intensity;
-
-//         strip.setPixelColor(pixelIndex, adjustedR, adjustedG, adjustedB);
-//       }
-//     }
-
-//     strip.show();
-//     delay(delayPerLed);
-//   }
-
-//   // 脉冲效果结束后恢复默认颜色
-//   for (int i = 0; i < LED_COUNT; i++)
-//   {
-//     strip1.setPixelColor(i, 0, 128, 128);
-//     strip2.setPixelColor(i, 0, 128, 128);
-//   }
-//   strip1.show();
-//   strip2.show();
-// }
+// 彩虹色辅助函数
+uint32_t Wheel(byte WheelPos)
+{
+  WheelPos = 255 - WheelPos;
+  if (WheelPos < 85)
+  {
+    return strip1.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if (WheelPos < 170)
+  {
+    WheelPos -= 85;
+    return strip1.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;
+  return strip1.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}

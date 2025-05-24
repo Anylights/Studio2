@@ -152,24 +152,39 @@ public class MinimalOptionsView : MonoBehaviour
             return;
         }
 
-        // 检查 Arduino 控制器实例是否存在
-        if (ArduinoController.Instance == null)
-        {
-            return;
-        }
-
         // 检测 Arduino 按钮按下事件
-        // 按下红色按钮 (Pin 2) - 始终选择显示的第一个选项（无论是否可用）
-        if (ArduinoController.Instance.RedButtonDown && currentOptions.Length > 0)
+        if (ArduinoController.Instance != null)
         {
-            // 选择第一个选项（索引0）
-            SelectOption(0);
-        }
-        // 按下绿色按钮 (Pin 3) - 始终选择显示的第二个选项（无论是否可用）
-        else if (ArduinoController.Instance.GreenButtonDown && currentOptions.Length > 1)
-        {
-            // 选择第二个选项（索引1）
-            SelectOption(1);
+            // 获取当前按钮映射
+            int redOptionIndex = 0;
+            int greenOptionIndex = 1;
+
+            // 如果RgbController存在，获取自定义映射
+            var rgbController = FindObjectOfType<RgbController>();
+            if (rgbController != null)
+            {
+                redOptionIndex = rgbController.GetRedButtonOptionIndex();
+                greenOptionIndex = rgbController.GetGreenButtonOptionIndex();
+            }
+
+            // 按下红色按钮 - 选择映射的选项
+            if (ArduinoController.Instance.RedButtonDown && redOptionIndex >= 0 && redOptionIndex < currentOptions.Length)
+            {
+                // 先发送按钮按下事件（用于脉冲效果），0代表红按钮/0号灯带
+                EventCenter.Instance.TriggerEvent<int>("buttonPressed", 0);
+
+                // 再选择对应选项
+                SelectOption(redOptionIndex);
+            }
+            // 按下绿色按钮 - 选择映射的选项
+            else if (ArduinoController.Instance.GreenButtonDown && greenOptionIndex >= 0 && greenOptionIndex < currentOptions.Length)
+            {
+                // 先发送按钮按下事件（用于脉冲效果），1代表绿按钮/1号灯带
+                EventCenter.Instance.TriggerEvent<int>("buttonPressed", 1);
+
+                // 再选择对应选项
+                SelectOption(greenOptionIndex);
+            }
         }
     }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using Uduino;
 using System.Collections;
 using System;
+using Yarn.Unity;
 
 public class RgbController : MonoBehaviour
 {
@@ -21,6 +22,59 @@ public class RgbController : MonoBehaviour
 
     // 检查Uduino管理器是否可用
     private bool IsUduinoAvailable => UduinoManager.Instance != null;
+
+    [Header("按钮映射")]
+    [SerializeField] private int redButtonOptionIndex = 0;   // 红按钮默认选择选项0
+    [SerializeField] private int greenButtonOptionIndex = 1; // 绿按钮默认选择选项1
+
+    // 当前脉冲效果类型
+    private string currentPulseEffectType = "default";
+
+    // 获取当前按钮映射
+    public int GetRedButtonOptionIndex() => redButtonOptionIndex;
+    public int GetGreenButtonOptionIndex() => greenButtonOptionIndex;
+
+    // Yarn命令：设置选项灯带颜色
+    [YarnCommand("set_option_colors")]
+    public void SetOptionColors(string strip1ColorHex, string strip2ColorHex)
+    {
+        if (string.IsNullOrEmpty(strip1ColorHex) || string.IsNullOrEmpty(strip2ColorHex))
+            return;
+
+        // 解析十六进制颜色
+        if (ColorUtility.TryParseHtmlString(strip1ColorHex, out Color color1))
+            optionStrip1Color = color1;
+
+        if (ColorUtility.TryParseHtmlString(strip2ColorHex, out Color color2))
+            optionStrip2Color = color2;
+
+        if (enableDebugLogs)
+            Debug.Log($"已设置选项灯带颜色：strip1={strip1ColorHex}, strip2={strip2ColorHex}");
+    }
+
+    // Yarn命令：设置按钮映射
+    [YarnCommand("set_button_mapping")]
+    public void SetButtonMapping(int redButtonOption, int greenButtonOption)
+    {
+        redButtonOptionIndex = redButtonOption;
+        greenButtonOptionIndex = greenButtonOption;
+
+        if (enableDebugLogs)
+            Debug.Log($"已设置按钮映射：红按钮={redButtonOption}, 绿按钮={greenButtonOption}");
+    }
+
+    // Yarn命令：设置脉冲效果类型
+    [YarnCommand("set_pulse_effect")]
+    public void SetPulseEffectType(string effectType)
+    {
+        if (string.IsNullOrEmpty(effectType))
+            effectType = "default";
+
+        currentPulseEffectType = effectType;
+
+        if (enableDebugLogs)
+            Debug.Log($"已设置脉冲效果类型：{effectType}");
+    }
 
     void Awake()
     {
@@ -50,7 +104,7 @@ public class RgbController : MonoBehaviour
             Debug.LogWarning("未找到MinimalOptionsView，灯带将无法对对话选项作出响应");
         }
 
-        EventCenter.Instance.Subscribe<int>("optionSelected", HandlePulseEffect);
+        EventCenter.Instance.Subscribe<int>("buttonPressed", HandlePulseEffect);
         // EventCenter.Instance.Subscribe<int>("ContinueDialogue", HandleDefaultPulseEffect);
     }
 
@@ -63,7 +117,7 @@ public class RgbController : MonoBehaviour
             optionsView.OnOptionsShown -= OnDialogueOptionsShown;
             optionsView.OnOptionsHidden -= OnDialogueOptionsHidden;
         }
-        EventCenter.Instance.Unsubscribe<int>("optionSelected", HandlePulseEffect);
+        EventCenter.Instance.Unsubscribe<int>("buttonPressed", HandlePulseEffect);
         // EventCenter.Instance.Unsubscribe<int>("ContinueDialogue", HandleDefaultPulseEffect);
 
         // 关闭灯带
@@ -216,9 +270,37 @@ public class RgbController : MonoBehaviour
         }
     }
 
-    void HandlePulseEffect(int optionIndex)
+    // 修改HandlePulseEffect方法，现在接收的是按钮索引而不是选项索引
+    void HandlePulseEffect(int buttonIndex)
     {
-        UduinoManager.Instance.sendCommand("PulseEffect", optionIndex.ToString());
+        if (!IsUduinoAvailable) return;
+
+        try
+        {
+            // 根据按钮索引获取对应的颜色
+            Color pulseColor = (buttonIndex == 0) ? optionStrip1Color : optionStrip2Color;
+
+            // 转换颜色为RGB值
+            int r = Mathf.RoundToInt(pulseColor.r * 255);
+            int g = Mathf.RoundToInt(pulseColor.g * 255);
+            int b = Mathf.RoundToInt(pulseColor.b * 255);
+
+            // 现在buttonIndex直接对应灯带索引：0=红按钮/0号灯带，1=绿按钮/1号灯带
+            // 发送命令：灯带索引、效果类型、RGB颜色值
+            UduinoManager.Instance.sendCommand("PulseEffect",
+                buttonIndex.ToString(),
+                currentPulseEffectType,
+                r.ToString(),
+                g.ToString(),
+                b.ToString());
+
+            if (enableDebugLogs)
+                Debug.Log($"已发送脉冲效果命令，按钮/灯带索引: {buttonIndex}, 效果类型: {currentPulseEffectType}, 颜色: R={r},G={g},B={b}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"发送脉冲效果命令失败: {e.Message}");
+        }
     }
 
     // void HandleDefaultPulseEffect(int stripIndex)
