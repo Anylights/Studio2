@@ -15,22 +15,27 @@ title: seaside
 小孩:哥哥，我被困在这里了
 小孩:我一不小心就玩过了时间...然后就涨潮了
 小孩:哥哥，救救我！
-<<declare $ZiZuoZiShou = false>>
--> 冒险涉水<<if $canswim == true>>
-    <<play_timeline 0302>>
-    <<wait 2>>
-    小孩:哥哥！
-    <<play_timeline 0303>>
-    （不，浪太高了）
-        ->冒险涉水<<if $canswim == false>>
-        ->寻找救援
-    我去找人来救你！
--> 你自作自受
-    <<set $ZiZuoZiShou = true>>
+-> 不救
+    <color=red><shake a=0.5>你<waitfor=0.2>自<waitfor=0.2>作<waitfor=0.2>自<waitfor=0.2>受。</shake></color>
     小孩:！！！！！！！！！！
     小孩:哥哥！！！
     小孩:救救我！！！！！！！
-    我才不管你的死活
+    <color=red><shake a=0.5>我才不管你的死活。</shake></color>
+    我已经受够你这个麻烦精了。
+    你每次在沙发上糟蹋的时候，我早就想把你扔到海里了。
+    <color=red><shake a=0.5>去死吧。再也不见。</shake></color>
+-> 救<<if $SiLeGengHao == false>>
+    ->冒险涉水<<if $canswim == true>>
+        <<play_timeline 0302>>
+        <<wait 2>>
+        小孩:哥哥！
+        <<play_timeline 0303>>
+        （不，浪太高了）
+        ->冒险涉水<<if $canswim == false>>
+        ->寻找救援
+    ->寻找救援
+    我去找人来救你！
+
 <<play_timeline 0304>>
 
 <<wait  3>>
