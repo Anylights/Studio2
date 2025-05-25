@@ -11388,7 +11388,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6765315780344333999, guid: 53b0594563e6ad243aef222cc812228c, type: 3}
       propertyPath: ManagerState
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6765315780344333999, guid: 53b0594563e6ad243aef222cc812228c, type: 3}
       propertyPath: interfaceType

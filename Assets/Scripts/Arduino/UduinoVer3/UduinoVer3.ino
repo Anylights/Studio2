@@ -671,26 +671,49 @@ void ChargingEffect()
   // 清除灯带
   strip.clear();
 
-  // 设置充能效果
-  // 从0到chargePosition位置显示渐变的充能效果
-  for (int i = 0; i <= chargePosition && i < LED_COUNT; i++)
+  // 颜色和亮度双重渐变效果
+  if (chargePosition >= 0 && chargePosition < LED_COUNT)
   {
-    // 计算亮度渐变，越靠近充能位置越亮
-    float intensity = 0.3f + 0.7f * ((float)i / (float)chargePosition);
-    if (chargePosition == 0)
-      intensity = 1.0f;
+    for (int i = 0; i <= chargePosition; i++)
+    {
+      // 颜色和亮度双重渐变效果
+      if (i == 0)
+      {
+        // 第一个灯珠：0%亮度（完全关闭）
+        strip.setPixelColor(i, 0, 0, 0);
+      }
+      else if (i == chargePosition)
+      {
+        // 充能位置：100%亮度，目标颜色
+        strip.setPixelColor(i, r, g, b);
+      }
+      else
+      {
+        // 中间灯珠：颜色从白色渐变到目标颜色，亮度使用对数变化
+        float progress = (float)i / (float)chargePosition; // 0.0 到 1.0
 
-    int adjustedR = r * intensity;
-    int adjustedG = g * intensity;
-    int adjustedB = b * intensity;
+        // 对数亮度渐变：使用平方函数让大部分灯珠保持较暗
+        // progress^2 会让前面的灯珠很暗，只有接近末端的才明显变亮
+        float brightnessFactor = progress * progress;   // 平方函数
+        int brightness = (int)(brightnessFactor * 100); // 0% 到 100%
 
-    strip.setPixelColor(i, adjustedR, adjustedG, adjustedB);
-  }
+        // 颜色渐变：从白色(255,255,255)到目标颜色(r,g,b)
+        int whiteR = 255;
+        int whiteG = 0;
+        int whiteB = 0;
 
-  // 在充能位置显示一个更亮的"能量头"
-  if (chargePosition < LED_COUNT)
-  {
-    strip.setPixelColor(chargePosition, r, g, b);
+        int currentR = whiteR + (int)((r - whiteR) * progress);
+        int currentG = whiteG + (int)((g - whiteG) * progress);
+        int currentB = whiteB + (int)((b - whiteB) * progress);
+
+        // 应用对数亮度到渐变后的颜色
+        int finalR = (currentR * brightness) / 100;
+        int finalG = (currentG * brightness) / 100;
+        int finalB = (currentB * brightness) / 100;
+
+        strip.setPixelColor(i, finalR, finalG, finalB);
+      }
+    }
   }
 
   strip.show();

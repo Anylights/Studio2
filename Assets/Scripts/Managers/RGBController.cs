@@ -502,13 +502,18 @@ public class RgbController : MonoBehaviour
             int g = Mathf.RoundToInt(chargeColor.g * 255);
             int b = Mathf.RoundToInt(chargeColor.b * 255);
 
+            int chargePos = Mathf.RoundToInt(currentChargePosition[stripIndex]);
+
             // 发送充能效果命令
             UduinoManager.Instance.sendCommand("ChargingEffect",
                 stripIndex.ToString(),
-                Mathf.RoundToInt(currentChargePosition[stripIndex]).ToString(),
+                chargePos.ToString(),
                 r.ToString(),
                 g.ToString(),
                 b.ToString());
+
+            if (enableDebugLogs)
+                Debug.Log($"发送充能效果命令: 灯带{stripIndex}, 位置{chargePos}, 颜色R={r},G={g},B={b}");
         }
         catch (System.Exception e)
         {
