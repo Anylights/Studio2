@@ -30,6 +30,24 @@ public class RgbController : MonoBehaviour
     // 当前脉冲效果类型
     private string currentPulseEffectType = "default";
 
+    // 单独的灯带脉冲效果类型
+    private string strip1PulseEffectType = "default"; // 0号灯带（红按钮）的脉冲效果
+    private string strip2PulseEffectType = "default"; // 1号灯带（绿按钮）的脉冲效果
+
+    [Header("充能效果设置")]
+    // 充能效果状态
+    private bool[] stripChargingMode = new bool[2] { false, false }; // 每条灯带是否处于充能模式
+    private float[] currentChargePosition = new float[2] { 0f, 0f }; // 当前充能位置（0-51）
+    private float[] maxChargePosition = new float[2] { 0f, 0f }; // 最远充能位置
+    private bool[] isCharging = new bool[2] { false, false }; // 是否正在充能中
+
+    // 充能效果参数（可通过Yarn命令设置）
+    private float chargeDistance = 8f; // 每次按钮推进的距离
+    private float chargeSpeed = 20f; // 推出去的速度（灯珠/秒）
+    private float decaySpeed = 3f; // 往回退的速度（灯珠/秒）
+    private int targetButtonMapping = 0; // 充能完成后要设置的按钮映射
+    private int chargingStripIndex = -1; // 当前正在充能的灯带索引
+
     // 获取当前按钮映射
     public int GetRedButtonOptionIndex() => redButtonOptionIndex;
     public int GetGreenButtonOptionIndex() => greenButtonOptionIndex;
@@ -71,9 +89,94 @@ public class RgbController : MonoBehaviour
             effectType = "default";
 
         currentPulseEffectType = effectType;
+        // 同时设置两条灯带为相同效果（保持向后兼容）
+        strip1PulseEffectType = effectType;
+        strip2PulseEffectType = effectType;
 
         if (enableDebugLogs)
             Debug.Log($"已设置脉冲效果类型：{effectType}");
+    }
+
+    // Yarn命令：分别设置每条灯带的脉冲效果类型
+    [YarnCommand("set_strip_pulse_effects")]
+    public void SetStripPulseEffects(string strip1Effect, string strip2Effect)
+    {
+        if (string.IsNullOrEmpty(strip1Effect))
+            strip1Effect = "default";
+        if (string.IsNullOrEmpty(strip2Effect))
+            strip2Effect = "default";
+
+        strip1PulseEffectType = strip1Effect;
+        strip2PulseEffectType = strip2Effect;
+
+        if (enableDebugLogs)
+            Debug.Log($"已设置灯带脉冲效果：strip1={strip1Effect}, strip2={strip2Effect}");
+    }
+
+    // Yarn命令：设置单条灯带的脉冲效果类型
+    [YarnCommand("set_single_strip_pulse_effect")]
+    public void SetSingleStripPulseEffect(int stripIndex, string effectType)
+    {
+        if (string.IsNullOrEmpty(effectType))
+            effectType = "default";
+
+        if (stripIndex == 0)
+        {
+            strip1PulseEffectType = effectType;
+        }
+        else if (stripIndex == 1)
+        {
+            strip2PulseEffectType = effectType;
+        }
+
+        if (enableDebugLogs)
+            Debug.Log($"已设置灯带{stripIndex}的脉冲效果类型：{effectType}");
+    }
+
+    // Yarn命令：启动充能效果
+    [YarnCommand("start_charging_effect")]
+    public void StartChargingEffect(int stripIndex, int targetMapping, float pushDistance = 8f, float pushSpeed = 20f, float decaySpd = 3f)
+    {
+        if (stripIndex < 0 || stripIndex > 1)
+        {
+            Debug.LogError($"无效的灯带索引: {stripIndex}");
+            return;
+        }
+
+        // 设置充能参数
+        chargeDistance = pushDistance;
+        chargeSpeed = pushSpeed;
+        decaySpeed = decaySpd;
+        targetButtonMapping = targetMapping;
+        chargingStripIndex = stripIndex;
+
+        // 初始化充能状态
+        stripChargingMode[stripIndex] = true;
+        currentChargePosition[stripIndex] = 0f;
+        maxChargePosition[stripIndex] = 0f;
+        isCharging[stripIndex] = false;
+
+        if (enableDebugLogs)
+            Debug.Log($"已启动灯带{stripIndex}的充能效果，目标映射: {targetMapping}, 推进距离: {pushDistance}, 推进速度: {pushSpeed}, 衰减速度: {decaySpd}");
+    }
+
+    // Yarn命令：停止充能效果
+    [YarnCommand("stop_charging_effect")]
+    public void StopChargingEffect(int stripIndex)
+    {
+        if (stripIndex < 0 || stripIndex > 1)
+        {
+            Debug.LogError($"无效的灯带索引: {stripIndex}");
+            return;
+        }
+
+        stripChargingMode[stripIndex] = false;
+        currentChargePosition[stripIndex] = 0f;
+        maxChargePosition[stripIndex] = 0f;
+        isCharging[stripIndex] = false;
+
+        if (enableDebugLogs)
+            Debug.Log($"已停止灯带{stripIndex}的充能效果");
     }
 
     void Awake()
@@ -106,6 +209,29 @@ public class RgbController : MonoBehaviour
 
         EventCenter.Instance.Subscribe<int>("buttonPressed", HandlePulseEffect);
         // EventCenter.Instance.Subscribe<int>("ContinueDialogue", HandleDefaultPulseEffect);
+    }
+
+    void Update()
+    {
+        // 处理充能效果的衰减
+        for (int i = 0; i < 2; i++)
+        {
+            if (stripChargingMode[i] && !isCharging[i] && maxChargePosition[i] > 0)
+            {
+                // 如果没有达到末端，则慢慢往回退
+                if (maxChargePosition[i] < 51f)
+                {
+                    maxChargePosition[i] -= decaySpeed * Time.deltaTime;
+                    maxChargePosition[i] = Mathf.Max(0f, maxChargePosition[i]);
+
+                    // 更新当前位置为最远位置
+                    currentChargePosition[i] = maxChargePosition[i];
+
+                    // 发送更新命令到Arduino
+                    UpdateChargingEffect(i);
+                }
+            }
+        }
     }
 
     private void OnDestroy()
@@ -275,10 +401,20 @@ public class RgbController : MonoBehaviour
     {
         if (!IsUduinoAvailable) return;
 
+        // 检查是否处于充能模式
+        if (buttonIndex >= 0 && buttonIndex < 2 && stripChargingMode[buttonIndex])
+        {
+            HandleChargingEffect(buttonIndex);
+            return;
+        }
+
         try
         {
             // 根据按钮索引获取对应的颜色
             Color pulseColor = (buttonIndex == 0) ? optionStrip1Color : optionStrip2Color;
+
+            // 根据按钮索引获取对应的脉冲效果类型
+            string effectType = (buttonIndex == 0) ? strip1PulseEffectType : strip2PulseEffectType;
 
             // 转换颜色为RGB值
             int r = Mathf.RoundToInt(pulseColor.r * 255);
@@ -289,18 +425,128 @@ public class RgbController : MonoBehaviour
             // 发送命令：灯带索引、效果类型、RGB颜色值
             UduinoManager.Instance.sendCommand("PulseEffect",
                 buttonIndex.ToString(),
-                currentPulseEffectType,
+                effectType,
                 r.ToString(),
                 g.ToString(),
                 b.ToString());
 
             if (enableDebugLogs)
-                Debug.Log($"已发送脉冲效果命令，按钮/灯带索引: {buttonIndex}, 效果类型: {currentPulseEffectType}, 颜色: R={r},G={g},B={b}");
+                Debug.Log($"已发送脉冲效果命令，按钮/灯带索引: {buttonIndex}, 效果类型: {effectType}, 颜色: R={r},G={g},B={b}");
         }
         catch (System.Exception e)
         {
             Debug.LogError($"发送脉冲效果命令失败: {e.Message}");
         }
+    }
+
+    // 处理充能效果
+    void HandleChargingEffect(int stripIndex)
+    {
+        if (isCharging[stripIndex]) return; // 如果正在充能中，忽略新的按钮按下
+
+        // 开始充能协程
+        StartCoroutine(ChargingCoroutine(stripIndex));
+    }
+
+    // 充能协程
+    System.Collections.IEnumerator ChargingCoroutine(int stripIndex)
+    {
+        isCharging[stripIndex] = true;
+
+        float startPosition = maxChargePosition[stripIndex];
+        float targetPosition = Mathf.Min(51f, maxChargePosition[stripIndex] + chargeDistance);
+
+        // 推进阶段
+        float elapsedTime = 0f;
+        float duration = (targetPosition - startPosition) / chargeSpeed;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = elapsedTime / duration;
+
+            currentChargePosition[stripIndex] = Mathf.Lerp(startPosition, targetPosition, progress);
+            maxChargePosition[stripIndex] = Mathf.Max(maxChargePosition[stripIndex], currentChargePosition[stripIndex]);
+
+            // 发送更新命令到Arduino
+            UpdateChargingEffect(stripIndex);
+
+            yield return null;
+        }
+
+        // 确保到达目标位置
+        currentChargePosition[stripIndex] = targetPosition;
+        maxChargePosition[stripIndex] = targetPosition;
+        UpdateChargingEffect(stripIndex);
+
+        // 检查是否达到末端
+        if (maxChargePosition[stripIndex] >= 51f)
+        {
+            // 充能完成！
+            OnChargingComplete(stripIndex);
+        }
+
+        isCharging[stripIndex] = false;
+    }
+
+    // 更新充能效果到Arduino
+    void UpdateChargingEffect(int stripIndex)
+    {
+        if (!IsUduinoAvailable) return;
+
+        try
+        {
+            // 获取颜色
+            Color chargeColor = (stripIndex == 0) ? optionStrip1Color : optionStrip2Color;
+            int r = Mathf.RoundToInt(chargeColor.r * 255);
+            int g = Mathf.RoundToInt(chargeColor.g * 255);
+            int b = Mathf.RoundToInt(chargeColor.b * 255);
+
+            // 发送充能效果命令
+            UduinoManager.Instance.sendCommand("ChargingEffect",
+                stripIndex.ToString(),
+                Mathf.RoundToInt(currentChargePosition[stripIndex]).ToString(),
+                r.ToString(),
+                g.ToString(),
+                b.ToString());
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"发送充能效果命令失败: {e.Message}");
+        }
+    }
+
+    // 充能完成处理
+    void OnChargingComplete(int stripIndex)
+    {
+        if (enableDebugLogs)
+            Debug.Log($"灯带{stripIndex}充能完成！");
+
+        // 停止充能模式
+        stripChargingMode[stripIndex] = false;
+
+        // 设置按钮映射
+        if (stripIndex == 0)
+        {
+            redButtonOptionIndex = targetButtonMapping;
+        }
+        else if (stripIndex == 1)
+        {
+            greenButtonOptionIndex = targetButtonMapping;
+        }
+
+        // 设置脉冲效果为彩虹
+        if (stripIndex == 0)
+        {
+            strip1PulseEffectType = "rainbow";
+        }
+        else if (stripIndex == 1)
+        {
+            strip2PulseEffectType = "rainbow";
+        }
+
+        if (enableDebugLogs)
+            Debug.Log($"已设置灯带{stripIndex}的按钮映射为{targetButtonMapping}，脉冲效果为rainbow");
     }
 
     // void HandleDefaultPulseEffect(int stripIndex)

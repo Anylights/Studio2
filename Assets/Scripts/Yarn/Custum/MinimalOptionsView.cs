@@ -168,22 +168,28 @@ public class MinimalOptionsView : MonoBehaviour
             }
 
             // 按下红色按钮 - 选择映射的选项
-            if (ArduinoController.Instance.RedButtonDown && redOptionIndex >= 0 && redOptionIndex < currentOptions.Length)
+            if (ArduinoController.Instance.RedButtonDown)
             {
                 // 先发送按钮按下事件（用于脉冲效果），0代表红按钮/0号灯带
                 EventCenter.Instance.TriggerEvent<int>("buttonPressed", 0);
 
-                // 再选择对应选项
-                SelectOption(redOptionIndex);
+                // 只有当映射不为-1且选项有效时才选择选项
+                if (redOptionIndex >= 0 && redOptionIndex < currentOptions.Length)
+                {
+                    SelectOption(redOptionIndex);
+                }
             }
             // 按下绿色按钮 - 选择映射的选项
-            else if (ArduinoController.Instance.GreenButtonDown && greenOptionIndex >= 0 && greenOptionIndex < currentOptions.Length)
+            else if (ArduinoController.Instance.GreenButtonDown)
             {
                 // 先发送按钮按下事件（用于脉冲效果），1代表绿按钮/1号灯带
                 EventCenter.Instance.TriggerEvent<int>("buttonPressed", 1);
 
-                // 再选择对应选项
-                SelectOption(greenOptionIndex);
+                // 只有当映射不为-1且选项有效时才选择选项
+                if (greenOptionIndex >= 0 && greenOptionIndex < currentOptions.Length)
+                {
+                    SelectOption(greenOptionIndex);
+                }
             }
         }
     }

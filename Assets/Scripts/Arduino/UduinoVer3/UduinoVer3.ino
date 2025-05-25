@@ -50,10 +50,11 @@ void setup()
   uduino.addCommand("b", ReadBundle);
   uduino.addInitFunction(DisconnectAllServos);
   uduino.addDisconnectedFunction(DisconnectAllServos);
-  uduino.addCommand("SetColor", SetColor);           // 设置所有灯带相同颜色
-  uduino.addCommand("SetStripColor", SetStripColor); // 设置指定灯带的颜色
-  uduino.addCommand("SetPixelColor", SetPixelColor); // 设置指定灯带指定灯珠的颜色
-  uduino.addCommand("PulseEffect", PulseEffect);     // 添加脉冲效果命令
+  uduino.addCommand("SetColor", SetColor);             // 设置所有灯带相同颜色
+  uduino.addCommand("SetStripColor", SetStripColor);   // 设置指定灯带的颜色
+  uduino.addCommand("SetPixelColor", SetPixelColor);   // 设置指定灯带指定灯珠的颜色
+  uduino.addCommand("PulseEffect", PulseEffect);       // 添加脉冲效果命令
+  uduino.addCommand("ChargingEffect", ChargingEffect); // 添加充能效果命令
   // uduino.addCommand("DefaultPulseEffect", DefaultPulseEffect); // 添加默认脉冲效果命令
 
   uduino.addDisconnectedFunction(uduinoDisconnect);
@@ -639,4 +640,58 @@ uint32_t Wheel(byte WheelPos)
   }
   WheelPos -= 170;
   return strip1.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}
+
+// 充能效果
+void ChargingEffect()
+{
+  char *arg = NULL;
+
+  // 获取灯带编号（0或1）
+  arg = uduino.next();
+  int stripIndex = (arg != NULL) ? atoi(arg) : 0;
+
+  // 获取当前充能位置（0-51）
+  arg = uduino.next();
+  int chargePosition = (arg != NULL) ? atoi(arg) : 0;
+
+  // 获取RGB颜色值
+  arg = uduino.next();
+  int r = (arg != NULL) ? atoi(arg) : 255;
+
+  arg = uduino.next();
+  int g = (arg != NULL) ? atoi(arg) : 0;
+
+  arg = uduino.next();
+  int b = (arg != NULL) ? atoi(arg) : 0;
+
+  // 选择对应的灯带
+  Adafruit_NeoPixel &strip = (stripIndex == 1) ? strip2 : strip1;
+
+  // 清除灯带
+  strip.clear();
+
+  // 设置充能效果
+  // 从0到chargePosition位置显示渐变的充能效果
+  for (int i = 0; i <= chargePosition && i < LED_COUNT; i++)
+  {
+    // 计算亮度渐变，越靠近充能位置越亮
+    float intensity = 0.3f + 0.7f * ((float)i / (float)chargePosition);
+    if (chargePosition == 0)
+      intensity = 1.0f;
+
+    int adjustedR = r * intensity;
+    int adjustedG = g * intensity;
+    int adjustedB = b * intensity;
+
+    strip.setPixelColor(i, adjustedR, adjustedG, adjustedB);
+  }
+
+  // 在充能位置显示一个更亮的"能量头"
+  if (chargePosition < LED_COUNT)
+  {
+    strip.setPixelColor(chargePosition, r, g, b);
+  }
+
+  strip.show();
 }

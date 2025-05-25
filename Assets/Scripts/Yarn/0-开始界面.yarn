@@ -4,8 +4,18 @@ position: -252,-511
 ---
 <<wait 1>>
 <<set_option_colors "#FF0000" "#FF0000">>
-<<set_button_mapping 0 0>> // 红按钮选择选项0，绿按钮选择选项1 (默认设置)
-// <<set_pulse_effect "rainbow">> // 设置脉冲效果为彩虹效果
+<<set_button_mapping -1 -1>> // 红按钮选择选项0，绿按钮选择选项1 (默认设置)
+<<set_strip_pulse_effects "rainbow" "bounce">>
+// 设置按钮映射，让红按钮无法选择选项（-1表示无效映射）
+<<set_button_mapping -1 1>>
+
+// 设置灯带颜色
+<<set_option_colors "#FF0000" "#00FF00">>
+
+// 启动0号灯带（红按钮）的充能效果
+// 参数：灯带0，完成后映射到选项0，每次推进10个灯珠，速度15，衰减速度2
+<<start_charging_effect 0 0 10 50 2>>
+
 -> 更多的选项
     -> 一些重要的信息
         按ESC键可以随时退出游戏。
