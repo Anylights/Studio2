@@ -68,6 +68,16 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 检查指定名称的音效是否存在
+    /// </summary>
+    /// <param name="soundName">音效名称</param>
+    /// <returns>如果音效存在返回true，否则返回false</returns>
+    public bool HasSound(string soundName)
+    {
+        return audioSourcesDic != null && audioSourcesDic.ContainsKey(soundName);
+    }
+
     [YarnCommand("pause_sound")]
     public static void Pause(string soundName)
     {

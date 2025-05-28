@@ -9,7 +9,7 @@ title: mid_lab_1
 
 <<if $SiLeGengHao == true>>
 男研究员: ...
-男研究员: <color=red><notype>冷血，</notype><waitfor=0.1f><notype>无情，</notype><waitfor=0.1f><notype>残忍。</notype></color>
+男研究员: <color=red><notype>冷血，</notype><waitfor=0.4><notype>无情，</notype><waitfor=0.4><notype>残忍。</notype></color>
 男研究员: 我从来没想到他会是这样的。
 女研究员: 博士。你对实验结果似乎很意外。
 男研究员: ...你说的对，是我低估他了。
@@ -23,8 +23,8 @@ title: mid_lab_1
 女研究员: 是，博士。
 女研究员: ...
 女研究员: 我只是好奇，他找到救援了吗？
-男研究员: 根据我们读取到的记忆，他根本没有离开家，并且因此极度后悔。
-男研究员: 但是从现在开始，他的记忆变成了，他做出了另一个选择。
+男研究员: 我不知道。读取到的记忆出现了错误，这一部分是空白的。所以这一段是系统生成的。
+男研究员: 但是那个叫埃雷特的小孩真真实实死在了海浪中，他是污水处理厂董事长的儿子。
 男研究员: 因此，什么样的结果并不重要。
 男研究员: 重要的是，他选了什么。
 <<endif>>
@@ -43,9 +43,21 @@ title: mid_lab_1
 男研究员: ...我自然会做出决定。现在，继续实验。
 女研究员: 是。
 <<play_timeline 0403>>
-<<wait 2>>
-
-123
-<<wait 2>>
-<<quit_game>>
+<<stop_sound_fade "lab" 2>>
+<<stop_sound_fade "lab_noise" 2>>
+<<wait 3>>
+永<waitfor=0.3>恒<waitfor=0.3>的<waitfor=0.3>风<waitfor=0.3>浪<waitfor=0.3>不<waitfor=0.3>会<waitfor=0.3>停<waitfor=0.3>歇
+但<waitfor=0.3>你<waitfor=0.3>仍<waitfor=0.3>然<waitfor=0.3>可<waitfor=0.3>以<waitfor=0.3>重<waitfor=0.3>做<waitfor=0.3>选<waitfor=0.3>择
+要<waitfor=0.3>重<waitfor=0.3>来<waitfor=0.3>这<waitfor=0.3>一<waitfor=0.3>部<waitfor=0.3>分<waitfor=0.3>吗？
+// // 参数：灯带0，完成后映射到选项0，每次推进10个灯珠，速度15，衰减速度2
+<<set_button_mapping -1 1>>
+<<start_charging_effect 0 0 10 100 5>>
+-> 是
+    <<set_strip_pulse_effects "default" "default">>
+    <<wait 2>>
+    <<change_scene Level2_home home>>
+-> 否
+    <<set_strip_pulse_effects "default" "default">>
+    <<wait 2>>
+    <<change_scene Level5_classroom classroom>>
 ===

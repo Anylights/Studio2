@@ -444,6 +444,30 @@ public class RgbController : MonoBehaviour
     {
         if (isCharging[stripIndex]) return; // 如果正在充能中，忽略新的按钮按下
 
+        // 播放充能音效
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySound("Energy", 1f, false);
+            if (enableDebugLogs)
+                Debug.Log("播放充能音效：Energy");
+        }
+        else
+        {
+            Debug.LogWarning("AudioManager未找到，无法播放充能音效");
+        }
+
+        // 触发摄像机震动
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.Shake(0.2f, 0.01f * currentChargePosition[stripIndex]); // 短暂轻微的震动
+            if (enableDebugLogs)
+                Debug.Log("触发摄像机震动");
+        }
+        else
+        {
+            Debug.LogWarning("CameraShake未找到，无法触发震动效果");
+        }
+
         // 开始充能协程
         StartCoroutine(ChargingCoroutine(stripIndex));
     }
@@ -526,6 +550,33 @@ public class RgbController : MonoBehaviour
     {
         if (enableDebugLogs)
             Debug.Log($"灯带{stripIndex}充能完成！");
+
+        // 播放充能完成音效
+        if (AudioManager.Instance != null)
+        {
+            // 尝试播放专门的充能完成音效，如果不存在则使用Energy音效
+            string completeSoundName = "EnergyComplete";
+            if (AudioManager.Instance.HasSound(completeSoundName))
+            {
+                AudioManager.Instance.PlaySound(completeSoundName, 1f, false);
+                if (enableDebugLogs)
+                    Debug.Log($"播放充能完成音效：{completeSoundName}");
+            }
+            else
+            {
+                AudioManager.Instance.PlaySound("Energy", 1f, false);
+                if (enableDebugLogs)
+                    Debug.Log("播放充能完成音效：Energy（备用）");
+            }
+        }
+
+        // 触发更强烈的摄像机震动
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.Shake(0.5f, 0.15f); // 更长时间、更强烈的震动
+            if (enableDebugLogs)
+                Debug.Log("触发充能完成震动效果");
+        }
 
         // 停止充能模式
         stripChargingMode[stripIndex] = false;
