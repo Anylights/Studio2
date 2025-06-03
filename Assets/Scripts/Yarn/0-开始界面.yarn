@@ -14,6 +14,18 @@ position: -252,-511
 // // 启动0号灯带（红按钮）的充能效果
 // // 参数：灯带0，完成后映射到选项0，每次推进10个灯珠，速度15，衰减速度2
 // <<start_charging_effect 0 0 10 100 5>>
+
+// 渐变脉冲效果示例：
+// 设置灯带使用渐变脉冲效果
+// <<set_strip_pulse_effects "gradient" "gradient">>
+// 设置0号灯带渐变参数：从红色到蓝色，持续300毫秒
+// <<set_gradient_pulse_params 0 "#FF0000" "#0000FF" 300>>
+// 设置1号灯带渐变参数：从绿色到紫色，持续500毫秒
+// <<set_gradient_pulse_params 1 "#00FF00" "#FF00FF" 10000>>
+
+// 或者同时设置两条灯带的渐变参数：
+// <<set_both_gradient_pulse_params "#FF0000" "#0000FF" 300 "#00FF00" "#FF00FF" 500>>
+
 -> 更多的选项
     -> 一些重要的信息
         按ESC键可以随时退出游戏。

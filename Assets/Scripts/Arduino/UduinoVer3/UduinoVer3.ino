@@ -411,16 +411,6 @@ void PulseEffect()
   arg = uduino.next();
   String effectType = (arg != NULL) ? String(arg) : "default";
 
-  // 获取RGB颜色值
-  arg = uduino.next();
-  int r = (arg != NULL) ? atoi(arg) : 255;
-
-  arg = uduino.next();
-  int g = (arg != NULL) ? atoi(arg) : 0;
-
-  arg = uduino.next();
-  int b = (arg != NULL) ? atoi(arg) : 0;
-
   // 选择对应的灯带
   Adafruit_NeoPixel &strip = (stripIndex == 1) ? strip2 : strip1;
 
@@ -440,8 +430,44 @@ void PulseEffect()
     // 闪烁效果
     FlashPulseEffect(strip);
   }
+  else if (effectType == "gradient")
+  {
+    // 渐变效果 - 需要更多参数：两个颜色 + 持续时间
+    // 获取第一个颜色的RGB值
+    arg = uduino.next();
+    int r1 = (arg != NULL) ? atoi(arg) : 255;
+    arg = uduino.next();
+    int g1 = (arg != NULL) ? atoi(arg) : 0;
+    arg = uduino.next();
+    int b1 = (arg != NULL) ? atoi(arg) : 0;
+
+    // 获取第二个颜色的RGB值
+    arg = uduino.next();
+    int r2 = (arg != NULL) ? atoi(arg) : 0;
+    arg = uduino.next();
+    int g2 = (arg != NULL) ? atoi(arg) : 255;
+    arg = uduino.next();
+    int b2 = (arg != NULL) ? atoi(arg) : 0;
+
+    // 获取持续时间（毫秒）
+    arg = uduino.next();
+    int duration = (arg != NULL) ? atoi(arg) : PULSE_DURATION;
+
+    // 调用渐变脉冲效果
+    GradientPulseEffect(strip, stripIndex, r1, g1, b1, r2, g2, b2, duration);
+  }
   else
   {
+    // 默认效果和其他效果 - 获取RGB颜色值
+    arg = uduino.next();
+    int r = (arg != NULL) ? atoi(arg) : 255;
+
+    arg = uduino.next();
+    int g = (arg != NULL) ? atoi(arg) : 0;
+
+    arg = uduino.next();
+    int b = (arg != NULL) ? atoi(arg) : 0;
+
     // 默认效果，传递接收到的颜色参数
     DefaultPulseEffect(strip, stripIndex, r, g, b);
   }
@@ -717,4 +743,78 @@ void ChargingEffect()
   }
 
   strip.show();
+}
+
+// 渐变脉冲效果
+void GradientPulseEffect(Adafruit_NeoPixel &strip, int stripIndex, int r1, int g1, int b1, int r2, int g2, int b2, int duration)
+{
+  // 先关闭所有灯珠
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    strip1.setPixelColor(i, 0, 0, 0);
+    strip2.setPixelColor(i, 0, 0, 0);
+  }
+  strip1.show();
+  strip2.show();
+
+  // 计算每个灯珠的延迟时间
+  int delayPerLed = duration / LED_COUNT;
+
+  // 执行渐变脉冲效果 - 带尾部的流动效果
+  for (int i = 0; i < LED_COUNT + PULSE_TAIL_LENGTH; i++)
+  {
+    // 先清除所有LED
+    for (int j = 0; j < LED_COUNT; j++)
+    {
+      strip.setPixelColor(j, 0, 0, 0);
+    }
+
+    // 设置"尾巴"的每个LED
+    for (int j = 0; j < PULSE_TAIL_LENGTH; j++)
+    {
+      int pixelIndex = i - j;
+
+      // 确保像素索引在有效范围内
+      if (pixelIndex >= 0 && pixelIndex < LED_COUNT)
+      {
+        // 根据在尾部的位置计算亮度
+        float intensity = 1.0f - ((float)j / PULSE_TAIL_LENGTH);
+
+        // 计算当前像素在整个灯带中的位置比例（0.0到1.0）
+        float positionRatio = (float)pixelIndex / (float)(LED_COUNT - 1);
+
+        // 根据位置比例计算颜色渐变：从颜色1到颜色2
+        int gradientR = r1 + (int)((r2 - r1) * positionRatio);
+        int gradientG = g1 + (int)((g2 - g1) * positionRatio);
+        int gradientB = b1 + (int)((b2 - b1) * positionRatio);
+
+        // 应用亮度到渐变后的RGB值
+        int finalR = gradientR * intensity;
+        int finalG = gradientG * intensity;
+        int finalB = gradientB * intensity;
+
+        strip.setPixelColor(pixelIndex, finalR, finalG, finalB);
+      }
+    }
+
+    strip.show();
+    delay(delayPerLed);
+  }
+
+  // 脉冲效果结束后再次关闭所有灯珠
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    strip.setPixelColor(i, 0, 0, 0);
+  }
+  strip.show();
+
+  // 恢复默认颜色
+  delay(100); // 短暂延迟以明确区分效果
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    strip1.setPixelColor(i, 50, 50, 50);
+    strip2.setPixelColor(i, 50, 50, 50);
+  }
+  strip1.show();
+  strip2.show();
 }

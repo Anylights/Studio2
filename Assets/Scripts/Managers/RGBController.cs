@@ -34,6 +34,18 @@ public class RgbController : MonoBehaviour
     private string strip1PulseEffectType = "default"; // 0号灯带（红按钮）的脉冲效果
     private string strip2PulseEffectType = "default"; // 1号灯带（绿按钮）的脉冲效果
 
+    // 渐变脉冲效果参数
+    [System.Serializable]
+    public class GradientParams
+    {
+        public Color startColor = Color.red;
+        public Color endColor = Color.blue;
+        public int duration = 200; // 毫秒
+    }
+
+    private GradientParams strip1GradientParams = new GradientParams();
+    private GradientParams strip2GradientParams = new GradientParams();
+
     [Header("充能效果设置")]
     // 充能效果状态
     private bool[] stripChargingMode = new bool[2] { false, false }; // 每条灯带是否处于充能模式
@@ -131,6 +143,48 @@ public class RgbController : MonoBehaviour
 
         if (enableDebugLogs)
             Debug.Log($"已设置灯带{stripIndex}的脉冲效果类型：{effectType}");
+    }
+
+    // Yarn命令：设置渐变脉冲效果参数
+    [YarnCommand("set_gradient_pulse_params")]
+    public void SetGradientPulseParams(int stripIndex, string startColorHex, string endColorHex, int duration = 200)
+    {
+        if (stripIndex < 0 || stripIndex > 1)
+        {
+            Debug.LogError($"无效的灯带索引: {stripIndex}");
+            return;
+        }
+
+        GradientParams targetParams = (stripIndex == 0) ? strip1GradientParams : strip2GradientParams;
+
+        // 解析颜色
+        if (!string.IsNullOrEmpty(startColorHex) && ColorUtility.TryParseHtmlString(startColorHex, out Color startColor))
+        {
+            targetParams.startColor = startColor;
+        }
+
+        if (!string.IsNullOrEmpty(endColorHex) && ColorUtility.TryParseHtmlString(endColorHex, out Color endColor))
+        {
+            targetParams.endColor = endColor;
+        }
+
+        // 设置持续时间
+        if (duration > 0)
+        {
+            targetParams.duration = duration;
+        }
+
+        if (enableDebugLogs)
+            Debug.Log($"已设置灯带{stripIndex}的渐变参数：起始颜色={startColorHex}, 结束颜色={endColorHex}, 持续时间={duration}ms");
+    }
+
+    // Yarn命令：同时设置两条灯带的渐变脉冲效果参数
+    [YarnCommand("set_both_gradient_pulse_params")]
+    public void SetBothGradientPulseParams(string strip1StartColor, string strip1EndColor, int strip1Duration,
+                                         string strip2StartColor, string strip2EndColor, int strip2Duration)
+    {
+        SetGradientPulseParams(0, strip1StartColor, strip1EndColor, strip1Duration);
+        SetGradientPulseParams(1, strip2StartColor, strip2EndColor, strip2Duration);
     }
 
     // Yarn命令：启动充能效果
@@ -410,28 +464,61 @@ public class RgbController : MonoBehaviour
 
         try
         {
-            // 根据按钮索引获取对应的颜色
-            Color pulseColor = (buttonIndex == 0) ? optionStrip1Color : optionStrip2Color;
-
             // 根据按钮索引获取对应的脉冲效果类型
             string effectType = (buttonIndex == 0) ? strip1PulseEffectType : strip2PulseEffectType;
 
-            // 转换颜色为RGB值
-            int r = Mathf.RoundToInt(pulseColor.r * 255);
-            int g = Mathf.RoundToInt(pulseColor.g * 255);
-            int b = Mathf.RoundToInt(pulseColor.b * 255);
-
             // 现在buttonIndex直接对应灯带索引：0=红按钮/0号灯带，1=绿按钮/1号灯带
-            // 发送命令：灯带索引、效果类型、RGB颜色值
-            UduinoManager.Instance.sendCommand("PulseEffect",
-                buttonIndex.ToString(),
-                effectType,
-                r.ToString(),
-                g.ToString(),
-                b.ToString());
+            if (effectType == "gradient")
+            {
+                // 渐变效果需要发送更多参数
+                GradientParams gradientParams = (buttonIndex == 0) ? strip1GradientParams : strip2GradientParams;
 
-            if (enableDebugLogs)
-                Debug.Log($"已发送脉冲效果命令，按钮/灯带索引: {buttonIndex}, 效果类型: {effectType}, 颜色: R={r},G={g},B={b}");
+                // 转换两个颜色为RGB值
+                int r1 = Mathf.RoundToInt(gradientParams.startColor.r * 255);
+                int g1 = Mathf.RoundToInt(gradientParams.startColor.g * 255);
+                int b1 = Mathf.RoundToInt(gradientParams.startColor.b * 255);
+
+                int r2 = Mathf.RoundToInt(gradientParams.endColor.r * 255);
+                int g2 = Mathf.RoundToInt(gradientParams.endColor.g * 255);
+                int b2 = Mathf.RoundToInt(gradientParams.endColor.b * 255);
+
+                // 发送渐变脉冲效果命令：灯带索引、效果类型、第一个颜色RGB、第二个颜色RGB、持续时间
+                UduinoManager.Instance.sendCommand("PulseEffect",
+                    buttonIndex.ToString(),
+                    effectType,
+                    r1.ToString(),
+                    g1.ToString(),
+                    b1.ToString(),
+                    r2.ToString(),
+                    g2.ToString(),
+                    b2.ToString(),
+                    gradientParams.duration.ToString());
+
+                if (enableDebugLogs)
+                    Debug.Log($"已发送渐变脉冲效果命令，灯带索引: {buttonIndex}, 起始颜色: R={r1},G={g1},B={b1}, 结束颜色: R={r2},G={g2},B={b2}, 持续时间: {gradientParams.duration}ms");
+            }
+            else
+            {
+                // 其他效果使用原有逻辑
+                // 根据按钮索引获取对应的颜色
+                Color pulseColor = (buttonIndex == 0) ? optionStrip1Color : optionStrip2Color;
+
+                // 转换颜色为RGB值
+                int r = Mathf.RoundToInt(pulseColor.r * 255);
+                int g = Mathf.RoundToInt(pulseColor.g * 255);
+                int b = Mathf.RoundToInt(pulseColor.b * 255);
+
+                // 发送命令：灯带索引、效果类型、RGB颜色值
+                UduinoManager.Instance.sendCommand("PulseEffect",
+                    buttonIndex.ToString(),
+                    effectType,
+                    r.ToString(),
+                    g.ToString(),
+                    b.ToString());
+
+                if (enableDebugLogs)
+                    Debug.Log($"已发送脉冲效果命令，按钮/灯带索引: {buttonIndex}, 效果类型: {effectType}, 颜色: R={r},G={g},B={b}");
+            }
         }
         catch (System.Exception e)
         {
