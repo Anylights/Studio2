@@ -424,10 +424,6 @@ public class MinimalOptionsView : MonoBehaviour
         // 标记选择进行中
         selectionInProgress = true;
         optionsActive = false;
-        AudioManager.Instance.PlaySound("option_selected", 1f, false);
-
-        // 触发选项隐藏事件
-        OnOptionsHidden?.Invoke();
 
         // 先发送事件
         EventCenter.Instance.TriggerEvent<int>("optionSelected", optionIndex);
@@ -437,11 +433,11 @@ public class MinimalOptionsView : MonoBehaviour
             Debug.Log($"选择了选项: {optionIndex}, ID: {currentOptions[optionIndex].DialogueOptionID}");
         }
 
-        // 开始淡出效果，但延迟实际的选项选择
+        // 开始延迟选项选择过程
         StartCoroutine(DelayedOptionSelection(optionIndex));
     }
 
-    // 先淡出UI，然后延迟选择选项
+    // 先等待Arduino脉冲效果，然后淡出UI，最后延迟选择选项
     private IEnumerator DelayedOptionSelection(int optionIndex)
     {
         // 保存当前选择的选项索引
@@ -467,6 +463,15 @@ public class MinimalOptionsView : MonoBehaviour
 
             yield break;
         }
+
+        // 首先等待额外的时间让Arduino完成脉冲效果
+        yield return new WaitForSeconds(selectionDelay);
+
+        // 播放选项选择音效
+        AudioManager.Instance.PlaySound("option_selected", 1f, false);
+
+        // 触发选项隐藏事件
+        OnOptionsHidden?.Invoke();
 
         // 立即隐藏所有其他选项，只保留被选择的选项
         for (int i = 0; i < optionUIObjects.Count; i++)
@@ -498,9 +503,6 @@ public class MinimalOptionsView : MonoBehaviour
         {
             optionUIObjects[optionIndex].SetActive(false);
         }
-
-        // 等待额外的时间让Arduino完成脉冲效果
-        yield return new WaitForSeconds(selectionDelay);
 
         if (runner.isRunning && selectedOptionID >= 0)
         {
@@ -555,6 +557,24 @@ public class MinimalOptionsView : MonoBehaviour
                 Debug.Log($"外部按钮按下，选择选项：{buttonIndex}");
             }
             SelectOption(buttonIndex);
+        }
+    }
+
+    // Yarn命令：设置选项选择延迟时间
+    [YarnCommand("set_selection_delay")]
+    public void SetSelectionDelay(float delay)
+    {
+        if (delay >= 0f)
+        {
+            selectionDelay = delay;
+            if (enableDebugLog)
+            {
+                Debug.Log($"已设置选项选择延迟时间为: {delay}秒");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"无效的延迟时间: {delay}，延迟时间必须大于等于0");
         }
     }
 }

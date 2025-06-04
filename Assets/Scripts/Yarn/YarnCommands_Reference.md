@@ -230,6 +230,12 @@
 - `stripIndex` (int): 灯带索引（0或1）  
 **示例**: `<<stop_charging_effect 0>>`
 
+### set_selection_delay
+**功能**: 设置选项选择后的延迟时间（等待Arduino脉冲效果完成的时间）  
+**参数**: 
+- `delay` (float): 延迟时间（秒），必须大于等于0  
+**示例**: `<<set_selection_delay 1.0>>`
+
 ---
 
 ## 摄像机效果命令
@@ -274,6 +280,77 @@
 **参数**: 
 - `duration` (float): 等待时间（秒）  
 **示例**: `<<wait 2.5>>`
+
+---
+
+## 时间管理命令
+
+**注意**: 使用时间命令前，需要在场景中的任意GameObject上添加`TimeCommands`组件。
+
+### get_datetime
+**功能**: 获取当前完整日期时间并设置为Yarn变量  
+**参数**: 
+- `variableName` (string): 要设置的变量名（会自动添加$前缀）
+- `format` (string): 时间格式，默认"yyyy-MM-dd HH:mm:ss"  
+**示例**: `<<get_datetime "current_time" "yyyy年MM月dd日 HH:mm:ss">>`
+
+### get_time
+**功能**: 获取当前时间（仅时间部分）并设置为Yarn变量  
+**参数**: 
+- `variableName` (string): 要设置的变量名（会自动添加$前缀）
+- `format` (string): 时间格式，默认"HH:mm:ss"  
+**示例**: `<<get_time "now_time" "HH:mm">>`
+
+### get_date
+**功能**: 获取当前日期（仅日期部分）并设置为Yarn变量  
+**参数**: 
+- `variableName` (string): 要设置的变量名（会自动添加$前缀）
+- `format` (string): 日期格式，默认"yyyy-MM-dd"  
+**示例**: `<<get_date "today" "MM/dd/yyyy">>`
+
+### get_timestamp
+**功能**: 获取Unix时间戳并设置为Yarn变量（浮点数类型）  
+**参数**: 
+- `variableName` (string): 要设置的变量名（会自动添加$前缀）  
+**示例**: `<<get_timestamp "timestamp">>`
+
+### get_hour
+**功能**: 获取当前小时数（0-23）并设置为Yarn变量  
+**参数**: 
+- `variableName` (string): 要设置的变量名（会自动添加$前缀）  
+**示例**: `<<get_hour "current_hour">>`
+
+### get_weekday
+**功能**: 获取当前星期几并设置为Yarn变量（0=周日，1=周一，...，6=周六）  
+**参数**: 
+- `variableName` (string): 要设置的变量名（会自动添加$前缀）  
+**示例**: `<<get_weekday "day_of_week">>`
+
+**时间格式说明**:
+- `yyyy`: 四位年份 (2024)
+- `MM`: 两位月份 (01-12)
+- `dd`: 两位日期 (01-31)
+- `HH`: 24小时制小时 (00-23)
+- `mm`: 分钟 (00-59)
+- `ss`: 秒 (00-59)
+
+**使用示例**:
+```yarn
+// 在Yarn文件开头声明变量
+<<declare $current_time = "">>
+<<declare $hour = 0.0>>
+
+// 获取当前时间
+<<get_time "current_time" "HH:mm">>
+<<get_hour "hour">>
+
+现在是{$current_time}。
+<<if $hour < 12>>
+早上好！
+<<else>>
+下午好！
+<<endif>>
+```
 
 ---
 

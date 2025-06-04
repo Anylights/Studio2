@@ -46,7 +46,7 @@ title: mid_lab_1
 <<stop_sound_fade "lab" 2>>
 <<stop_sound_fade "lab_noise" 2>>
 <<wait 3>>
-永<waitfor=0.3>恒<waitfor=0.3>的<waitfor=0.3>风<waitfor=0.3>浪<waitfor=0.3>不<waitfor=0.3>会<waitfor=0.3>停<waitfor=0.3>歇
+既<waitfor=0.3>定<waitfor=0.3>的<waitfor=0.3>现<waitfor=0.3>实<waitfor=0.3>无<waitfor=0.3>法<waitfor=0.3>修<waitfor=0.3>改
 但<waitfor=0.3>你<waitfor=0.3>仍<waitfor=0.3>然<waitfor=0.3>可<waitfor=0.3>以<waitfor=0.3>重<waitfor=0.3>做<waitfor=0.3>选<waitfor=0.3>择
 要<waitfor=0.3>重<waitfor=0.3>来<waitfor=0.3>这<waitfor=0.3>一<waitfor=0.3>部<waitfor=0.3>分<waitfor=0.3>吗？
 // // 参数：灯带0，完成后映射到选项0，每次推进10个灯珠，速度15，衰减速度2
