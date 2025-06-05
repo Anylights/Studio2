@@ -1,9 +1,11 @@
-title:Corridor
+title:corridor
 ---
 <<play_timeline 0601>>//亮灯、往前走
 -> 进入阳台
-    <<change_scene Level7_balcony balcony>>   
+    <<play_timeline 0603>>//熄灯
+    // <<change_scene Level7_balcony balcony>>   
 -> 往前走
-    <<play_timeline 0602>>//往前走、熄灯
-    <<jump Corridor>>
+    <<play_timeline 0602>>//往前走
+    <<play_timeline 0603>>//熄灯
+    <<jump corridor>>
 ===
