@@ -326,6 +326,30 @@
 - `variableName` (string): 要设置的变量名（会自动添加$前缀）  
 **示例**: `<<get_weekday "day_of_week">>`
 
+### start_countdown
+**功能**: 开始一个基于真实物理时间的倒计时  
+**参数**: 
+- `durationInSeconds` (float): 倒计时持续时间（秒）
+- `targetNodeName` (string): 倒计时结束后要跳转的节点名（可选）  
+**示例**: `<<start_countdown 300 "death_scene">>` （5分钟后跳转到death_scene节点）
+
+### stop_countdown
+**功能**: 停止当前运行的倒计时  
+**参数**: 无  
+**示例**: `<<stop_countdown>>`
+
+### get_countdown_remaining
+**功能**: 获取倒计时剩余时间并设置为Yarn变量  
+**参数**: 
+- `variableName` (string): 要设置的变量名（会自动添加$前缀）  
+**示例**: `<<get_countdown_remaining "remaining_time">>`
+
+### is_countdown_active
+**功能**: 检查倒计时是否正在运行并设置为Yarn变量  
+**参数**: 
+- `variableName` (string): 要设置的变量名（会自动添加$前缀）  
+**示例**: `<<is_countdown_active "countdown_running">>`
+
 **时间格式说明**:
 - `yyyy`: 四位年份 (2024)
 - `MM`: 两位月份 (01-12)
@@ -350,6 +374,38 @@
 <<else>>
 下午好！
 <<endif>>
+```
+
+**倒计时功能使用示例**:
+```yarn
+// 声明倒计时相关变量
+<<declare $remaining_time = 0.0>>
+<<declare $countdown_active = false>>
+
+莎文: 我会在五分钟后死去。
+// 开始5分钟（300秒）倒计时，结束后跳转到death_scene节点
+<<start_countdown 300 "death_scene">>
+
+// 在其他地方可以检查倒计时状态
+<<is_countdown_active "countdown_active">>
+<<if $countdown_active == true>>
+    // 获取剩余时间并显示
+    <<get_countdown_remaining "remaining_time">>
+    还剩{$remaining_time}秒...
+    
+    // 如果需要取消倒计时
+    <<stop_countdown>>
+<<endif>>
+```
+
+**创建death_scene节点来处理倒计时结束**:
+```yarn
+title: death_scene
+---
+// 倒计时结束后执行的逻辑
+莎文突然倒下了...
+// 这里可以添加死亡相关的逻辑
+===
 ```
 
 ---

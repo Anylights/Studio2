@@ -422,8 +422,17 @@ void PulseEffect()
   }
   else if (effectType == "bounce")
   {
-    // 弹跳效果
-    BouncePulseEffect(strip);
+    // 弹跳效果 - 需要颜色参数
+    arg = uduino.next();
+    int r = (arg != NULL) ? atoi(arg) : 255;
+
+    arg = uduino.next();
+    int g = (arg != NULL) ? atoi(arg) : 0;
+
+    arg = uduino.next();
+    int b = (arg != NULL) ? atoi(arg) : 0;
+
+    BouncePulseEffect(strip, stripIndex, r, g, b);
   }
   else if (effectType == "flash")
   {
@@ -576,39 +585,99 @@ void RainbowPulseEffect(Adafruit_NeoPixel &strip)
   strip2.show();
 }
 
-// 弹跳效果
-void BouncePulseEffect(Adafruit_NeoPixel &strip)
+// 弹跳效果 - 使用与默认效果相同的逻辑，但增加反向脉冲
+void BouncePulseEffect(Adafruit_NeoPixel &strip, int stripIndex, int r, int g, int b)
 {
-  // 清除灯带
+  // 先关闭所有灯珠
+  for (int i = 0; i < LED_COUNT; i++)
+  {
+    strip1.setPixelColor(i, 0, 0, 0);
+    strip2.setPixelColor(i, 0, 0, 0);
+  }
+  strip1.show();
+  strip2.show();
+
+  // 计算每个灯珠的延迟时间
+  int delayPerLed = PULSE_DURATION / LED_COUNT;
+
+  // 第一次脉冲：从首端到末端（正向）
+  for (int i = 0; i < LED_COUNT + PULSE_TAIL_LENGTH; i++)
+  {
+    // 先清除所有LED
+    for (int j = 0; j < LED_COUNT; j++)
+    {
+      strip.setPixelColor(j, 0, 0, 0);
+    }
+
+    // 设置"尾巴"的每个LED
+    for (int j = 0; j < PULSE_TAIL_LENGTH; j++)
+    {
+      int pixelIndex = i - j;
+
+      // 确保像素索引在有效范围内
+      if (pixelIndex >= 0 && pixelIndex < LED_COUNT)
+      {
+        // 根据在尾部的位置计算亮度
+        float intensity = 1.0f - ((float)j / PULSE_TAIL_LENGTH);
+
+        // 应用亮度到RGB值
+        int finalR = r * intensity;
+        int finalG = g * intensity;
+        int finalB = b * intensity;
+
+        strip.setPixelColor(pixelIndex, finalR, finalG, finalB);
+      }
+    }
+
+    strip.show();
+    delay(delayPerLed);
+  }
+
+  // 等待1秒后再开始反向脉冲
+  delay(1000);
+
+  // 第二次脉冲：从末端到首端（反向）
+  for (int i = 0; i < LED_COUNT + PULSE_TAIL_LENGTH; i++)
+  {
+    // 先清除所有LED
+    for (int j = 0; j < LED_COUNT; j++)
+    {
+      strip.setPixelColor(j, 0, 0, 0);
+    }
+
+    // 设置"尾巴"的每个LED（反向计算）
+    for (int j = 0; j < PULSE_TAIL_LENGTH; j++)
+    {
+      int pixelIndex = (LED_COUNT - 1) - (i - j);
+
+      // 确保像素索引在有效范围内
+      if (pixelIndex >= 0 && pixelIndex < LED_COUNT)
+      {
+        // 根据在尾部的位置计算亮度
+        float intensity = 1.0f - ((float)j / PULSE_TAIL_LENGTH);
+
+        // 应用亮度到RGB值
+        int finalR = r * intensity;
+        int finalG = g * intensity;
+        int finalB = b * intensity;
+
+        strip.setPixelColor(pixelIndex, finalR, finalG, finalB);
+      }
+    }
+
+    strip.show();
+    delay(delayPerLed);
+  }
+
+  // 脉冲效果结束后再次关闭所有灯珠
   for (int i = 0; i < LED_COUNT; i++)
   {
     strip.setPixelColor(i, 0, 0, 0);
   }
   strip.show();
 
-  // 弹跳效果实现
-  for (int j = 0; j < 3; j++)
-  { // 重复3次
-    // 正向
-    for (int i = 0; i < LED_COUNT; i++)
-    {
-      strip.clear();
-      strip.setPixelColor(i, 0, 255, 255);
-      strip.show();
-      delay(10);
-    }
-
-    // 反向
-    for (int i = LED_COUNT - 1; i >= 0; i--)
-    {
-      strip.clear();
-      strip.setPixelColor(i, 0, 255, 255);
-      strip.show();
-      delay(10);
-    }
-  }
-
   // 恢复默认颜色
+  delay(100); // 短暂延迟以明确区分效果
   for (int i = 0; i < LED_COUNT; i++)
   {
     strip1.setPixelColor(i, 50, 50, 50);

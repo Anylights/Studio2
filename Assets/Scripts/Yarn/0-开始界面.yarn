@@ -43,7 +43,7 @@ position: -252,-511
             已重置。
         <<jump Start>>
 -> 开始游戏
-    <<start_game>>
+    <<play_timeline 0001>>
     <<stop_sound_fade "Start" 2>>
-    <<wait 1>>
+    <<start_game>>
 ===

@@ -1,6 +1,7 @@
 title: classroom
 ---
-// <<play_timeline 0501>>//亮灯
+<<play_timeline 0501>>//亮灯
+<<play_sound "classroom" 1 true>>
 老师: 上节课我们讲了拉普拉斯信条。
 老师: 现在来进行提问。
 老师: 让我看看...
@@ -18,7 +19,6 @@ title: classroom
                         老师: ...好吧。
                         老师: 埃里克·坎贝尔记旷课。我们换一个人。
                         老师: 让我看看...
-                        老师: 莎文·<color=red>埃雷特</color> 。
                         <<jump Saven_Elliot>>
                     -> <wiggle a=0.3 f=2>站起来</wiggle>                           
             -> <wiggle a=0.4 f=1.5>站起来</wiggle>   
@@ -28,7 +28,8 @@ title: classroom
 
 title: Stand_Up
 ---
-// <<play_timeline 0502>>//站起来
+<<set_animation_bool "StudentZ" "IsStanding" true>>
+<<wait 1>>
 <<declare $Is_Z = false>>
 老师: 你是埃里克·坎贝尔?
     -> 不是。
@@ -116,7 +117,8 @@ title: Stand_Up
 <<else>>
     老师: 好吧，回答正确。
 <<endif>>
-// <<play_timeline 0503>>//主角坐下
+<<set_animation_bool "StudentZ" "IsStanding" false>>
+<<wait 1>>
 老师: 现在我们换一个人。
 老师: ...
 <<jump Saven_Elliot>>
@@ -124,11 +126,12 @@ title: Stand_Up
 
 title: Saven_Elliot
 ---
-老师: 莎文·埃雷特。
+老师: 莎文·<color=red>埃雷特</color> 。
 （...）
 老师: 莎文·埃雷特？
 <<wait 2>>
-// <<play_timeline 0504>>//转学生站起来
+<<set_animation_bool "Saven" "IsStanding" true>>
+<<wait 1>>
 <<if $Silent_Count == 3>>
     老师: 拉普拉斯信条的内容是？
     莎文: ...
@@ -148,7 +151,10 @@ title: Saven_Elliot
 <<declare $current_time = "">>
 <<get_time "current_time" "HH:mm">>
 莎文: 现在是{$current_time}
-莎文: <color=red>而<waitfor=0.5>我<waitfor=0.5>会<waitfor=0.5>在<waitfor=0.5>五<waitfor=0.5>分<waitfor=0.5>钟<waitfor=0.5>后<waitfor=0.5>死<waitfor=0.5>去。</color>
+<<stop_sound "classroom">>
+莎文: <color=red>而<waitfor=0.2>我<waitfor=0.2>会<waitfor=0.2>在<waitfor=0.2>五<waitfor=0.2>分<waitfor=0.2>钟<waitfor=0.2>后<waitfor=0.2>死<waitfor=0.2>去。</color>
+<<start_countdown 300 "death_scene">>
+<<play_sound "strange" 1 true>>
 <<wait  3>>
 同学1: 这个神经病又在发什么疯？
 同学2: 谁知道？从她转过来开始就没正常过。
@@ -166,5 +172,95 @@ title: Saven_Elliot
 老师: 够了！！！
 老师: 滚出去。
 老师: 听见了吗？给我滚出去！！！
-// <<play_timeline 0505>>//莎文离开
+<<play_timeline 0502>>//莎文离开
+<<wait 3>>
+老师: 我们继续上课。
+老师: 拉普拉斯信条是错误的。
+老师: 量子力学的不确定性原理证明微观粒子行为本质随机，
+老师: 混沌理论显示初始条件微变会导致宏观系统完全无法预测，
+老师: 哥德尔不完备定理则从数学上宣告了认知的绝对边界。
+// 老师: 宇宙是确定性的，但也是随机的。
+// 老师: 我们无法预测未来，但我们可以选择如何面对未来。
+老师: 只有一种情况，拉普拉斯信条是正确的。
+老师: <color=blue>那就是，你认为你是被圈养的存在。</color>
+老师: 相信这种观点的人，也不必出现在这个学校里了。
+<<stop_sound_fade "strange"1>>
+<<play_sound "classover" 1 false>>//下课
+<<wait 3>>
+老师: 下课。
+<<play_timeline 0503>>//熄灯又开灯，同学换姿势，老师出去
+<<jump After_Class>>
 ===
+
+title: After_Class
+---
+<<play_sound "classroom" 1 true>>
+->什么也不做
+    ...
+    （莎文·埃雷特。）
+    （他们是什么关系？）
+    ...
+    （不。谁都知道他从小就是个独生子。）
+    （不。）
+    （不可能。）
+    （不可能！）
+    同学2: 那个神经病终于消失了。
+    同学3: 这种人怎么能到学校来。
+    同学2: 你没听老师说吗？她父母有关系。
+    同学3: 学校真是什么人都要。
+    同学2: 偷偷告诉你，我觉得她一定有问题。
+    同学3: 这不是废话吗？
+    同学2: 我不是这个意思。是她的手臂。
+    同学3: 怎么了？
+    同学2: 针孔。密密麻麻的针孔。
+    同学2: 像蜂窝一样，没有一片皮肤是好的。
+    同学2: 我上厕所的时候看到的。
+    同学2: 她一定在做什么见不得人的事情。
+    同学3: 天呐···
+    ···
+    ->继续什么也不做
+        同学2: 那边那个呆子也不是什么好东西。
+        同学3: 哪个？
+        同学2: 上课回答问题的那个。
+        同学3: 嘘！
+        同学3: 他还坐在那里呢！
+        同学2: 放心，他肯定听不到的。
+        同学3: 他怎么了？
+        同学2: 你知道他成绩有多烂吧。
+        同学3: 全世界都知道。
+        同学2: 你猜他怎么进到这所学校的？
+        同学3: 不会也是...?
+        同学2: 猜对了一半。
+        同学2: 他爸以前是污水处理厂的工人。
+        同学2: 后来得了<color=red>血锈病</color>。
+        同学3: ···！
+        同学2: 污水处理厂以前也有过工人得血锈病。
+        同学2: 以往出现这种情况都是赔一大笔钱了事。
+        同学2: 但是你也知道，血绣病几乎不可能治好。
+        同学2: 他爸知道自己治不好病，就去跟厂长谈条件。
+        同学3: 污水处理厂的厂长是...
+        同学2: 对！是学校的董事。
+        同学3: 原来是踩着父亲的命上来的。
+        同学2: 可不是，但你看他那个样子。上学有什么用？
+        同学3: 你怎么知道这么多？
+        同学2: 嘘！
+        同学2: 我爸是董事会的。我偷偷看过他的文件袋。
+        同学3: 我擦，那你也太厉害了！
+        同学2: 这件事可不准说出去。
+        同学3: 明白明白！
+        ...
+        <<set_button_mapping 1 1>>
+        <<set_option_colors "#00FF1E" "#00FF1E">>
+        ->继续什么也不做
+        ->出去看看
+        <<set_button_mapping 0 1>>
+        <<set_option_colors "#FF001E" "#00FF1E">>
+    ->出去看看
+->出去看看
+<<play_timeline 0505>>//男主跑出去
+<<stop_sound_fade "classroom" 2>>
+<<play_timeline 0504>> //熄灯
+<<change_scene Level6_corridor corridor>>
+===
+
+
