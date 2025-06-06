@@ -2,16 +2,19 @@ title:balcony
 ---
 <<save_game>>
 <<play_sound "wind" 1 true>>
+<<play_sound "balcony" 1 true>>
 <<play_timeline 0701>>//亮灯、男主走进天台
 <<wait  3>>
-要跳的人: <color=red>不要留下你的姓名。</color>
+要跳的人: <color=red>是你。</color>
     -> 什么？
     -> 你还好吗？
-要跳的人: <color=red>不要试图拯救一切。</color>
+要跳的人: <color=red>不要试图拯救我。你做不到。</color>
     -> 发生什么了？
     -> 你在说什么？
 要跳的人: 时间不多了。
+<<wait  1>>
 <<play_timeline 0702>>//转学生转身
+<<wait  1>>
 要跳的人: 我知道你。
     -> 你认识我？
     -> 你是谁？
@@ -20,18 +23,22 @@ title:balcony
 要跳的人: 你站在轨道旁的控制杆旁。
 要跳的人: 如果拉动控制杆，电车将切换到另一条轨道上，
 要跳的人: 但那条轨道上也绑着1个人。
-要跳的人: 你会拉动控制杆吗？”
+要跳的人: 你会拉动控制杆吗？
+（！？）
+要跳的人: 熟悉吗？
+要跳的人: 你会拉动控制杆吗？
     -> 会
         <<set $hw3_callback = true>>
     -> 不会
         <<set $hw3_callback = false>>
 <<if $hw3_callback == $hw3>>
+    要跳的人: 两次都这么选吗？
     <<if $hw3_callback == true>>
-        要跳的人: 坚持牺牲最小化吗？
-        要跳的人: 两次都这么选，这样选你就觉得正确吗？
+        要跳的人: 坚持牺牲最小化。
+        要跳的人: 这样选你就觉得正确吗？
     <<else>>
-        要跳的人: 还是坚持尊重他人命运吗？
-        要跳的人: <color=red><shake>还是说你就是喜欢看着别人痛苦？</shake></color>
+        要跳的人: 是顺其自然，
+        要跳的人: <color=red>还是说你根本不敢选？</color>
     <<endif>>
 <<else>>
     要跳的人: 真的吗？你上次不是这么选的。
@@ -39,12 +46,15 @@ title:balcony
     要跳的人: 还是说，你觉得
     要跳的人: <color=red><shake>这个选择根本无关紧要？</color></shake>
 <<endif>>
+-> 我不记得这个问题。
+    要跳的人: 不，你当然记得。
 -> 你是谁？？！？
--> 你怎么知道我选了什么？
 <<play_timeline 0703>>//转学生转身
 <<wait  3>>
 要跳的人: 什么也没法改变的。
 要跳的人: 他们马上就要来了。
+要跳的人: 他说的一点都不错。
+要跳的人: 我们都是被圈养的存在。
 要跳的人: 你也会死的。但你还有机会。
 要跳的人: <color=red><shake>记住，千万不要顺从。</shake></color>
 // 设置灯带使用渐变脉冲效果
@@ -61,14 +71,6 @@ title:balcony
 <<wait  2>>
 要跳的人: 时间到了。
 <<play_timeline 0704>>//转学生跳楼
-<<jump death_scene>>
+<<stop_all_sounds_fade 2>>
+<<change_scene Level8_die die>> 
 ===
-
-title:death_scene
----
-// <<play_sound "death" 1 true>>
-// <<play_timeline 0705>>
-<<wait  3>>
-===
-
-

@@ -34,6 +34,7 @@ public class CharacterDialogueManager : MonoBehaviour
     private TypewriterByCharacter activeTypewriter = null;  // TextAnimator的打字机组件引用
     private Coroutine dismissCoroutine = null;
     private bool dialogueReady = false; // 对话是否准备好被推进
+    private bool autoPlayNext = false; // 下一句对话是否自动播放（只影响下一句）
 
     // 字典用于快速查找角色
     private Dictionary<string, CharacterDialogueInfo> characterMap = new Dictionary<string, CharacterDialogueInfo>();
@@ -319,6 +320,14 @@ public class CharacterDialogueManager : MonoBehaviour
         // 文本完全显示后，标记对话准备好继续
         dialogueReady = true;
 
+        // 如果设置了单次自动播放下一句，立即继续对话
+        if (autoPlayNext)
+        {
+            autoPlayNext = false; // 重置标志，确保只影响一句对话
+            StartCoroutine(AutoContinueAfterDelay());
+            return;
+        }
+
         // 如果设置了自动推进，则启动自动关闭计时器
         if (autoAdvanceDialogue)
         {
@@ -335,6 +344,15 @@ public class CharacterDialogueManager : MonoBehaviour
         yield return new WaitForSeconds(dialogueDuration);
 
         if (autoAdvanceDialogue && dialogueReady)
+            ContinueDialogue();
+    }
+
+    // 自动继续到下一句对话（稍微延迟以确保界面更新完成）
+    private System.Collections.IEnumerator AutoContinueAfterDelay()
+    {
+        yield return new WaitForSeconds(0.1f); // 短暂延迟确保打字机效果完全结束
+
+        if (dialogueReady)
             ContinueDialogue();
     }
 
@@ -470,5 +488,13 @@ public class CharacterDialogueManager : MonoBehaviour
         var dialogueRunner = FindObjectOfType<MinimalDialogueRunner>();
         if (dialogueRunner != null)
             dialogueRunner.Continue();
+    }
+
+    // Yarn命令：设置下一句对话自动播放
+    [YarnCommand("auto_next")]
+    public void SetAutoNext()
+    {
+        autoPlayNext = true;
+        Debug.Log("设置下一句对话自动播放");
     }
 }

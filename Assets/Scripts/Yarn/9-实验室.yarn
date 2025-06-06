@@ -1,0 +1,23 @@
+title:mid_lab_2
+---
+<<save_game>>
+<<play_sound "lab" 1 true>>
+<<play_sound "lab_noise" 0.5 true>>
+<<play_timeline 0901>>
+<<auto_next>>
+女研究员: 博士,实验结果..
+男研究员: 六号实验品的意识消失了。
+女研究员: 什么?!?可是她不是一直介入了生命维稳系统吗?
+男研究员: <color=red>我知道!!!她的生命体征一切正常,但是她的意识消失了!!!</color>
+男研究员: 你继续实验。我现在去调取所有的系统日志,我要知道她是怎么消失的!!!
+<<auto_next>>
+女研究员: 博士,实验结果..
+男研究员: <color=red><shake>实验结果之后再说,现在继续实验。</shake></color>
+<<auto_next>>
+女研究员: 可是，
+男研究员: <color=red><shake><notype>现在</notype><notype>继续</notype><notype>实验。</notype></shake></color>
+女研究员: ...是。
+<<stop_all_sounds_fade 4>>
+<<play_timeline 0902>>//男研究员离开
+<<change_scene "Level10_factory" factory>>
+===

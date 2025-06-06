@@ -26,6 +26,7 @@ position: -252,-511
 // <<set_button_mapping 0 0>>
 // // 或者同时设置两条灯带的渐变参数：
 // // <<set_both_gradient_pulse_params "#FF0000" "#0000FF" 300 "#00FF00" "#FF00FF" 500>>
+
 -> 更多的选项
     -> 一些重要的信息
         按ESC键可以随时退出游戏。

@@ -289,11 +289,5 @@ public class CameraShake : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 获取当前震动模式
-    /// </summary>
-    public bool IsUsingCinemachine()
-    {
-        return useCinemachine;
-    }
+
 }

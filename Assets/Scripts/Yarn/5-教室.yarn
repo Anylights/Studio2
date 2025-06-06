@@ -57,7 +57,7 @@ title: Stand_Up
                         老师: <rainb>你难道是什么实验小白鼠吗？</rainb>
                         老师: <wave>又或者自以为身处什么科幻电影中？</wave>
                         老师: 我再给你一次机会。你叫什么？
-                            -> 123456789Z <<if $Is_Z == false>>
+                            -> Z <<if $Is_Z == false>>
                             -> 埃里克·坎贝尔
                     -> 埃里克·坎贝尔
                 老师: 我一点也不觉得这很幽默。你的喜剧天分烂透了。
@@ -143,6 +143,7 @@ title: Saven_Elliot
     老师: 拉普拉斯信条是否正确？
     莎文: ...
     莎文: 正确。
+    <<auto_next>>
     老师: 错误。
     莎文: 不，正确。
     老师: 你什么意思？
@@ -154,7 +155,7 @@ title: Saven_Elliot
 莎文: 现在是{$current_time}
 <<stop_sound "classroom">>
 莎文: <color=red>而<waitfor=0.2>我<waitfor=0.2>会<waitfor=0.2>在<waitfor=0.2>五<waitfor=0.2>分<waitfor=0.2>钟<waitfor=0.2>后<waitfor=0.2>死<waitfor=0.2>去。</color>
-<<start_countdown 300 "death_scene">>
+<<start_countdown 300 "die">>
 <<play_sound "strange" 1 true>>
 <<wait  3>>
 同学1: 这个神经病又在发什么疯？
@@ -169,7 +170,7 @@ title: Saven_Elliot
 老师: 什么？
 莎文: <color=red><shake a=0.5>一切都是安排好的。我马上就会死。我将不得不死。任何事情都是安排好的，他正看着我呢！</shake></color>
 老师: 你到底在说什么？谁在看着你？
-莎文: <color=red><shake a=0.5>我不知道！我不知道！我不知道！我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道</shake></color>
+莎文: <color=red><shake a=0.5>我不知道！我不知道！我不知道！我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道我不知道</shake></color>
 老师: 够了！！！
 老师: 滚出去。
 老师: 听见了吗？给我滚出去！！！
@@ -250,12 +251,39 @@ title: After_Class
         同学2: 这件事可不准说出去。
         同学3: 明白明白！
         ...
-        <<set_button_mapping 1 1>>
-        <<set_option_colors "#00FF1E" "#00FF1E">>
         ->继续什么也不做
+            同学3: 你还知道什么？
+            同学2: 嘘！可不能传出去太多。
+            同学3: 放心，不会有第二个人知道的。
+            同学2: 谁知道呢？万一现在就有人在什么地方偷听呢？
+            同学3: 傻逼。你是不是被害妄想症啊？
+            同学2: 你才傻逼。我说真的。说不定就有个什么人。
+            同学2: 我们的对话对他来说一清二楚。我们却看不到他。
+            同学3: 你脑子烧掉了吗？
+            同学2: 切。跟你说不明白。
+            同学2: 不过我还真知道点别的。
+            同学3: 说来听听。
+            同学2: 那个精神病，她妈是污水处理厂长的情妇。
+            同学3: 哦操！这么劲爆！！
+            同学2: 你他妈小点声！！
+            同学3: 哦哦。然后呢？
+            同学2: 然后？然后我就不知道了。
+            同学3: 哎！说话说一半。
+            <<stop_sound "classroom">>
+            <<play_sound "die_indoor" 1 false>>
+            <<wait  2>>
+            同学3: 我擦，什么动静？
+            <<set_button_mapping 1 1>>
+            <<set_option_colors "#00FF1E" "#00FF1E">>
+                ->继续什么也不做
+                ->出去看看
+            <<set_button_mapping 0 1>>
+            <<set_option_colors "#FF001E" "#00FF1E">>
+            <<play_timeline 0505>>//男主跑出去
+            <<stop_sound_fade "classroom" 2>>
+            <<play_timeline 0504>> //熄灯
+            <<change_scene Level8_die die>> 
         ->出去看看
-        <<set_button_mapping 0 1>>
-        <<set_option_colors "#FF001E" "#00FF1E">>
     ->出去看看
 ->出去看看
 <<play_timeline 0505>>//男主跑出去
