@@ -1,5 +1,6 @@
 title: classroom
 ---
+<<save_game>>
 <<play_timeline 0501>>//亮灯
 <<play_sound "classroom" 1 true>>
 老师: 上节课我们讲了拉普拉斯信条。

@@ -1,9 +1,10 @@
 title:corridor
 ---
+<<save_game>>
 <<play_timeline 0601>>//亮灯、往前走
--> 进入阳台
+-> 进入天台
     <<play_timeline 0603>>//熄灯
-    // <<change_scene Level7_balcony balcony>>   
+    <<change_scene Level7_balcony balcony>>   
 -> 往前走
     <<play_timeline 0602>>//往前走
     <<play_timeline 0603>>//熄灯

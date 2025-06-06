@@ -164,9 +164,9 @@ position: 310,-136
 你会拉动控制杆吗？”
 <<declare $hw3 = false>>
 （...?）
-    ->按
+    ->会
         <<set $hw3 = true>>
-    ->不按
+    ->不会
         <<set $hw3 = false>>
 
 小孩:哥哥！

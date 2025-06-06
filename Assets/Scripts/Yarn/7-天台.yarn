@@ -1,0 +1,74 @@
+title:balcony
+---
+<<save_game>>
+<<play_sound "wind" 1 true>>
+<<play_timeline 0701>>//亮灯、男主走进天台
+<<wait  3>>
+要跳的人: <color=red>不要留下你的姓名。</color>
+    -> 什么？
+    -> 你还好吗？
+要跳的人: <color=red>不要试图拯救一切。</color>
+    -> 发生什么了？
+    -> 你在说什么？
+要跳的人: 时间不多了。
+<<play_timeline 0702>>//转学生转身
+要跳的人: 我知道你。
+    -> 你认识我？
+    -> 你是谁？
+<<declare $hw3_callback = false>>
+要跳的人: “一辆失控的有轨电车在轨道上疾驰，前方的轨道上绑着5个人。
+要跳的人: 你站在轨道旁的控制杆旁。
+要跳的人: 如果拉动控制杆，电车将切换到另一条轨道上，
+要跳的人: 但那条轨道上也绑着1个人。
+要跳的人: 你会拉动控制杆吗？”
+    -> 会
+        <<set $hw3_callback = true>>
+    -> 不会
+        <<set $hw3_callback = false>>
+<<if $hw3_callback == $hw3>>
+    <<if $hw3_callback == true>>
+        要跳的人: 坚持牺牲最小化吗？
+        要跳的人: 两次都这么选，这样选你就觉得正确吗？
+    <<else>>
+        要跳的人: 还是坚持尊重他人命运吗？
+        要跳的人: <color=red><shake>还是说你就是喜欢看着别人痛苦？</shake></color>
+    <<endif>>
+<<else>>
+    要跳的人: 真的吗？你上次不是这么选的。
+    要跳的人: 还是说你自己也不记得自己选了什么？
+    要跳的人: 还是说，你觉得
+    要跳的人: <color=red><shake>这个选择根本无关紧要？</color></shake>
+<<endif>>
+-> 你是谁？？！？
+-> 你怎么知道我选了什么？
+<<play_timeline 0703>>//转学生转身
+<<wait  3>>
+要跳的人: 什么也没法改变的。
+要跳的人: 他们马上就要来了。
+要跳的人: 你也会死的。但你还有机会。
+要跳的人: <color=red><shake>记住，千万不要顺从。</shake></color>
+// 设置灯带使用渐变脉冲效果
+<<set_strip_pulse_effects "gradient" "default">>
+// 设置0号灯带渐变参数：从红色到绿色，持续2500毫秒
+<<set_gradient_pulse_params 0 "#FF001E" "#00FF1E" 2500>>
+<<set_button_mapping 1 1>>
+<<set_selection_delay 3>>
+-> 我记住了。
+-> 我不明白你在说什么。
+<<set_strip_pulse_effects "default" "default">>
+<<set_button_mapping 0 1>>
+<<set_selection_delay 0.5>>
+<<wait  2>>
+要跳的人: 时间到了。
+<<play_timeline 0704>>//转学生跳楼
+<<jump death_scene>>
+===
+
+title:death_scene
+---
+// <<play_sound "death" 1 true>>
+// <<play_timeline 0705>>
+<<wait  3>>
+===
+
+
