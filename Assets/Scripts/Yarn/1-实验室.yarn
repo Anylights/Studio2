@@ -24,7 +24,7 @@ position: -197,-537
 男研究员: 您的全名是叫埃里克·坎贝尔·Z，对吗？
     -> 不是。
         <<set $NotZ = true>>
-        男研究员: ...身份资料是您亲自填写的，您确认您不是埃里克·坎贝尔·Z吗？
+        男研究员: ...身份ID是您提供的，您确认您不是埃里克·坎贝尔·Z吗？
         -> 不是。
             男研究员: 那请问您的名字是？
                 -> 我没有名字
@@ -73,7 +73,7 @@ position: -197,-537
             男研究员: <shake a=0.5><color=red><notype>我们</notype><waitfor=0.5><notype>真的</notype><waitfor=0.5><notype>没有</notype><waitfor=0.5><notype>时间</notype><waitfor=0.5><notype>再浪费了。</notype></shake></color>
             <<set $NotAgree = true>>
     -> 我同意。
-男研究员: 好的。最后，您同意，您将承担实验可能带来的所有后果。
+男研究员: 好的。最后，您理解，实验的持续时间将会有较大的不确定性。
     -> 我不同意。<<if $NotAgree == false>> 
         男研究员: 您确认吗？如果您现在放弃，我们之前所有的合约都会失效。
         男研究员: <color=red><shake a=0.5>包括我们谈判了很久才同意的报酬。</shake></color>

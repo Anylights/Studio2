@@ -51,6 +51,18 @@ public class AudioManager : MonoBehaviour
         Debug.Log("PlaySound: " + soundName);
     }
 
+    [YarnCommand("play_sound_fade")]
+    public static void PlayWithFade(string soundName, float volume = 1, bool loop = false, float fadeDuration = 1f)
+    {
+        if (Instance == null)
+        {
+            Debug.LogError("AudioManager instance not found!");
+            return;
+        }
+        Instance.PlaySoundWithFade(soundName, volume, loop, fadeDuration);
+        Debug.Log("PlaySoundWithFade: " + soundName);
+    }
+
     public void PlaySound(string soundName, float volume = 1, bool loop = false)
     {
         if (!audioSourcesDic.ContainsKey(soundName))
@@ -66,6 +78,24 @@ public class AudioManager : MonoBehaviour
             source.loop = loop;
             source.Play();
         }
+    }
+
+    private void PlaySoundWithFade(string soundName, float volume = 1, bool loop = false, float fadeDuration = 1f)
+    {
+        if (!audioSourcesDic.ContainsKey(soundName))
+        {
+            Debug.LogWarning($"Sound {soundName} not found!");
+            return;
+        }
+
+        // 如果已经有正在进行的淡入/淡出协程，先停止它
+        if (fadeCoroutines.ContainsKey(soundName) && fadeCoroutines[soundName] != null)
+        {
+            StopCoroutine(fadeCoroutines[soundName]);
+        }
+
+        // 开始新的淡入协程
+        fadeCoroutines[soundName] = StartCoroutine(FadeIn(soundName, volume, loop, fadeDuration));
     }
 
     /// <summary>
@@ -235,6 +265,26 @@ public class AudioManager : MonoBehaviour
         {
             StopSoundWithFade(soundName, fadeDuration);
         }
+    }
+
+    private IEnumerator FadeIn(string soundName, float targetVolume, bool loop, float fadeDuration)
+    {
+        AudioSource source = audioSourcesDic[soundName];
+        source.volume = 0f; // 从0音量开始
+        source.loop = loop;
+        source.Play(); // 开始播放
+
+        float timer = 0f;
+
+        while (timer < fadeDuration)
+        {
+            timer += Time.deltaTime;
+            source.volume = Mathf.Lerp(0f, targetVolume, timer / fadeDuration);
+            yield return null;
+        }
+
+        source.volume = targetVolume; // 确保达到目标音量
+        fadeCoroutines.Remove(soundName);
     }
 
     private IEnumerator FadeOut(string soundName, float fadeDuration)

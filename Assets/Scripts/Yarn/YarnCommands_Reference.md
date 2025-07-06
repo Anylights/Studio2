@@ -62,6 +62,15 @@
 - `loop` (bool): 是否循环，默认false  
 **示例**: `<<play_sound "BGM" 0.8 true>>`
 
+### play_sound_fade
+**功能**: 淡入播放指定音频  
+**参数**: 
+- `soundName` (string): 音效名称
+- `volume` (float): 目标音量，默认1.0
+- `loop` (bool): 是否循环，默认false
+- `fadeDuration` (float): 淡入时长（秒），默认1.0  
+**示例**: `<<play_sound_fade "BGM" 0.8 true 2.0>>`
+
 ### pause_sound
 **功能**: 暂停指定音频  
 **参数**: 

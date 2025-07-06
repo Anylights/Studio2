@@ -143,19 +143,18 @@ title: Saven_Elliot
     老师: 拉普拉斯信条是否正确？
     莎文: ...
     莎文: 正确。
-    <<auto_next>>
     老师: 错误。
     莎文: 不，正确。
     老师: 你什么意思？
     莎文: 宇宙中所有事件都已安排好。
     莎文: 就像
 <<endif>>
-<<declare $current_time = "">>
-<<get_time "current_time" "HH:mm">>
-莎文: 现在是{$current_time}
+// <<declare $current_time = "">>
+// <<get_time "current_time" "HH:mm">>
+// 莎文: 现在是{$current_time}
 <<stop_sound "classroom">>
-莎文: <color=red>而<waitfor=0.2>我<waitfor=0.2>会<waitfor=0.2>在<waitfor=0.2>五<waitfor=0.2>分<waitfor=0.2>钟<waitfor=0.2>后<waitfor=0.2>死<waitfor=0.2>去。</color>
-<<start_countdown 300 "die">>
+莎文: <color=red>我<waitfor=0.2>会<waitfor=0.2>在<waitfor=0.2>五<waitfor=0.2>分<waitfor=0.2>钟<waitfor=0.2>后<waitfor=0.2>死<waitfor=0.2>去。</color>
+// <<start_countdown 300 "die">>
 <<play_sound "strange" 1 true>>
 <<wait  3>>
 同学1: 这个神经病又在发什么疯？
@@ -197,7 +196,12 @@ title: Saven_Elliot
 title: After_Class
 ---
 <<play_sound "classroom" 1 true>>
-->什么也不做
+<<wait  1>>
+同学2: 那个神经病终于消失了。
+同学3: 她不会真的去死了吧？
+同学2: 连老师都不管，你关心她干嘛？
+同学3: 我只是好奇。
+->留在原地
     ...
     （莎文·埃雷特。）
     （他们是什么关系？）
@@ -206,8 +210,6 @@ title: After_Class
     （不。）
     （不可能。）
     （不可能！）
-    同学2: 那个神经病终于消失了。
-    同学3: 这种人怎么能到学校来。
     同学2: 你没听老师说吗？她父母有关系。
     同学3: 学校真是什么人都要。
     同学2: 偷偷告诉你，我觉得她一定有问题。
@@ -220,7 +222,7 @@ title: After_Class
     同学2: 她一定在做什么见不得人的事情。
     同学3: 天呐···
     ···
-    ->继续什么也不做
+    ->继续留在原地
         同学2: 那边那个呆子也不是什么好东西。
         同学3: 哪个？
         同学2: 上课回答问题的那个。
@@ -251,7 +253,7 @@ title: After_Class
         同学2: 这件事可不准说出去。
         同学3: 明白明白！
         ...
-        ->继续什么也不做
+        ->继续留在原地
             同学3: 你还知道什么？
             同学2: 嘘！可不能传出去太多。
             同学3: 放心，不会有第二个人知道的。
@@ -264,7 +266,7 @@ title: After_Class
             同学2: 不过我还真知道点别的。
             同学3: 说来听听。
             同学2: 那个精神病，她妈是污水处理厂长的情妇。
-            同学3: 哦操！这么劲爆！！
+            同学3: 哦擦！这么劲爆！！
             同学2: 你他妈小点声！！
             同学3: 哦哦。然后呢？
             同学2: 然后？然后我就不知道了。

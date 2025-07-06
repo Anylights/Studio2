@@ -1,7 +1,9 @@
 title:die
 ---
+<<save_game>>
 <<play_sound "die" 1 false>>
 <<play_timeline 0801>>
 <<stop_all_sounds_fade 5>>
+<<wait 5>>
 <<change_scene Level9_lab mid_lab_2>>
 ===

@@ -56,7 +56,7 @@ title:balcony
 要跳的人: 他说的一点都不错。
 要跳的人: 我们都是被圈养的存在。
 要跳的人: 你也会死的。但你还有机会。
-要跳的人: <color=red><shake>记住，千万不要顺从。</shake></color>
+要跳的人: <color=red><shake>记住，千万不要选择顺从。</shake></color>
 // 设置灯带使用渐变脉冲效果
 <<set_strip_pulse_effects "gradient" "default">>
 // 设置0号灯带渐变参数：从红色到绿色，持续2500毫秒

@@ -1,4 +1,60 @@
 title:factory
 ---
-123
+<<save_game>>
+<<play_sound_fade "fac_noise" 0.3 true 3.0>>
+<<play_sound_fade "water" 0.4 true 3.0>>
+<<play_sound "fac" 1 true>>
+<<play_timeline 1001>>//亮灯
+<<wait  2>>
+厂长。
+2089研究所刚刚宣称，新的放射性重金属离子分离工艺已经研发成功了。
+只要购买专利投入使用，可以...
+-> 大大减少员工劳损
+-> 大大增加工厂效益
+（...)
+厂长？
+<<wait 1>>
+<<play_timeline 1002>>//厂长转身
+<<wait 1>>
+厂长: 嗯...?
+厂长: 哟...两万八千三百五十七号低级工。
+厂长: 现在连低级工都有本事管工艺的事了？
+厂长: <shake>真是吃了熊心豹子胆。</shake>
+厂长: 谁让你来的？
+// 设置灯带使用渐变脉冲效果
+<<set_strip_pulse_effects "gradient" "default">>
+// 设置0号灯带渐变参数：从红色到绿色，持续2500毫秒
+<<set_gradient_pulse_params 0 "#FF001E" "#00FF1E" 2500>>
+<<set_button_mapping 1 1>>
+<<set_selection_delay 3>>
+-> Z
+-> 是我自己来的
+<<set_strip_pulse_effects "default" "default">>
+<<set_button_mapping 0 1>>
+<<set_selection_delay 0.5>>
+厂长: 哟吼，低级工关心的事还挺多。
+-> 现有的工艺对人体损害太大了
+    厂长:两万八千三百五十七号，你知道整个污水处理厂有多少员工吗？
+    -> 很多，所以改善工艺才重要
+    -> 不知道
+    厂长: 像你这样的低级工，厂里有<incr>十二万五千多个。</incr>
+    厂长: 每年劳损的员工仅有一千多，劳损率百分之一都不到。
+    厂长: <wave>是你会算账还是我会算账？</wave>
+    -> 我只是为工厂效益着想
+-> 我只是为工厂效益着想
+厂长: <wave>哈哈哈哈哈哈哈哈哈！</wave>
+厂长: 两万八千三百五十七号,你还挺有幽默感的。
+厂长: <color=red>你该关心的事情是你他妈下个月的房租。</color>
+厂长: 今天早上你迟到了二十一分钟，扣除工资五百联邦币。
+厂长: 越级汇报，根据工厂规定罚款四百联邦币。
+厂长: 擅离职守，扣除工资一千联邦币。
+厂长: 自己好自为之吧。
+<<play_timeline 1003>>//厂长离开
+<<wait 3>>
+<<play_timeline 1004>>//晕倒
+<<stop_sound_fade "fac_noise" 3>>
+<<stop_sound_fade "water" 3>>
+<<stop_sound_fade "fac" 3>>
+<<wait 3>>
+<<change_scene Level11_clinic clinic>>
 ===
