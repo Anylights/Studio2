@@ -83,15 +83,15 @@ public class LinePathEffect : MonoBehaviour
         }
     }
 
-    void Update()
-    {
-        timer += Time.deltaTime;
-        if (timer >= 3f)
-        {
-            LinePathEffect.Instance.DrawLines(0.5f, Color.red);
-            timer = 0f;
-        }
-    }
+    // void Update()
+    // {
+    //     timer += Time.deltaTime;
+    //     if (timer >= 3f)
+    //     {
+    //         LinePathEffect.Instance.DrawLines(0.5f, Color.red);
+    //         timer = 0f;
+    //     }
+    // }
 
     // 新增：只传duration和单色
     public void DrawLines(float customDuration, Color color)

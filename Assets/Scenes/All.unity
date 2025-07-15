@@ -24087,7 +24087,7 @@ MonoBehaviour:
   lineZ: 0
   afterDrawWait: 0.5
   postProcessVolume: {fileID: 1000371519}
-  bloomMaxIntensity: 10
+  bloomMaxIntensity: 2
 --- !u!4 &811982589
 Transform:
   m_ObjectHideFlags: 0
@@ -35047,6 +35047,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6765315780344333999, guid: 53b0594563e6ad243aef222cc812228c, type: 3}
       propertyPath: ManagerState
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6765315780344333999, guid: 53b0594563e6ad243aef222cc812228c, type: 3}
+      propertyPath: autoReconnect
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6765315780344333999, guid: 53b0594563e6ad243aef222cc812228c, type: 3}
@@ -63415,6 +63419,8 @@ MonoBehaviour:
   lastLineText: {fileID: 0}
   fadeTime: 0.25
   selectionDelay: 0.5
+  optionStrip1Color: {r: 1, g: 0.1764706, b: 0.37647063, a: 1}
+  optionStrip2Color: {r: 0.07058824, g: 0.9960785, b: 0.47450984, a: 1}
   enableDebugLog: 1
   optionDisplayInputCooldown: 0.1
 --- !u!320 &7238088253682303076

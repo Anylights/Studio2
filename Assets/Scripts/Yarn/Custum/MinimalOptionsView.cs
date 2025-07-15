@@ -13,6 +13,9 @@ public class MinimalOptionsView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI lastLineText;
     [SerializeField] private float fadeTime = 0.25f; // 淡入淡出时间
     [SerializeField] private float selectionDelay = 0.5f; // 选择选项后的延迟时间
+
+    [SerializeField] private Color optionStrip1Color = Color.red;   // 显示对话选项时灯带1的颜色
+    [SerializeField] private Color optionStrip2Color = Color.green; // 显示对话选项时灯带2的颜色
     [SerializeField] private bool enableDebugLog = true;
 
     [Header("输入设置")] // 添加一个新的Header以便在Inspector中分类
@@ -138,40 +141,52 @@ public class MinimalOptionsView : MonoBehaviour
         // 如果选项不活跃或者选择正在进行中，不处理输入
         if (!optionsActive || selectionInProgress) return;
 
-        // 检查键盘输入
-        if (Input.GetKeyDown(KeyCode.Alpha1) && currentOptions.Length > 0)
+        // 获取当前按钮映射
+        int redOptionIndex = 0;
+        int greenOptionIndex = 1;
+        var rgbController = FindObjectOfType<RgbController>();
+        if (rgbController != null)
         {
-            // 选择第一个选项（索引0）
-            SelectOption(0);
+            redOptionIndex = rgbController.GetRedButtonOptionIndex();
+            greenOptionIndex = rgbController.GetGreenButtonOptionIndex();
+        }
+
+        // 检查键盘输入：ASDF 作为左按钮，JKL和分号作为右按钮
+        bool leftKeyPressed = Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) ||
+                              Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.F);
+        bool rightKeyPressed = Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.K) ||
+                               Input.GetKeyDown(KeyCode.L) || Input.GetKeyDown(KeyCode.Semicolon);
+
+        // 键盘左键（ASDF）选择红色按钮映射的选项
+        if (leftKeyPressed)
+        {
+            LinePathEffect.Instance.DrawLines(0.5f, optionStrip1Color);
+            if (redOptionIndex >= 0 && redOptionIndex < currentOptions.Length)
+            {
+                SelectOption(redOptionIndex);
+            }
             return;
         }
-        else if (Input.GetKeyDown(KeyCode.Alpha2) && currentOptions.Length > 1)
+        // 键盘右键（JKL;）选择绿色按钮映射的选项
+        if (rightKeyPressed)
         {
-            // 选择第二个选项（索引1）
-            SelectOption(1);
+            LinePathEffect.Instance.DrawLines(0.5f, optionStrip2Color);
+            if (greenOptionIndex >= 0 && greenOptionIndex < currentOptions.Length)
+            {
+                SelectOption(greenOptionIndex);
+            }
             return;
         }
 
-        // 检测 Arduino 按钮按下事件
+        // 检测 Arduino 按钮按下事件（原有逻辑保留）
         if (ArduinoController.Instance != null)
         {
-            // 获取当前按钮映射
-            int redOptionIndex = 0;
-            int greenOptionIndex = 1;
-
-            // 如果RgbController存在，获取自定义映射
-            var rgbController = FindObjectOfType<RgbController>();
-            if (rgbController != null)
-            {
-                redOptionIndex = rgbController.GetRedButtonOptionIndex();
-                greenOptionIndex = rgbController.GetGreenButtonOptionIndex();
-            }
-
             // 按下红色按钮 - 选择映射的选项
             if (ArduinoController.Instance.RedButtonDown)
             {
                 // 先发送按钮按下事件（用于脉冲效果），0代表红按钮/0号灯带
                 EventCenter.Instance.TriggerEvent<int>("buttonPressed", 0);
+                LinePathEffect.Instance.DrawLines(0.5f, optionStrip1Color);
 
                 // 只有当映射不为-1且选项有效时才选择选项
                 if (redOptionIndex >= 0 && redOptionIndex < currentOptions.Length)
@@ -184,6 +199,7 @@ public class MinimalOptionsView : MonoBehaviour
             {
                 // 先发送按钮按下事件（用于脉冲效果），1代表绿按钮/1号灯带
                 EventCenter.Instance.TriggerEvent<int>("buttonPressed", 1);
+                LinePathEffect.Instance.DrawLines(0.5f, optionStrip2Color);
 
                 // 只有当映射不为-1且选项有效时才选择选项
                 if (greenOptionIndex >= 0 && greenOptionIndex < currentOptions.Length)
