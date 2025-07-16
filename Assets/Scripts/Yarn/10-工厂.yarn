@@ -20,19 +20,6 @@ title:factory
 厂长: 哟...两万八千三百五十七号低级工。
 厂长: 现在连低级工都有本事管工艺的事了？
 厂长: <shake>真是吃了熊心豹子胆。</shake>
-厂长: 谁让你来的？
-// 设置灯带使用渐变脉冲效果
-<<set_strip_pulse_effects "gradient" "default">>
-// 设置0号灯带渐变参数：从红色到绿色，持续2500毫秒
-<<set_gradient_pulse_params 0 "#FF001E" "#00FF1E" 2500>>
-<<set_button_mapping 1 1>>
-<<set_selection_delay 3>>
--> Z
--> 是我自己来的
-<<set_strip_pulse_effects "default" "default">>
-<<set_button_mapping 0 1>>
-<<set_selection_delay 0.5>>
-厂长: 哟吼，低级工关心的事还挺多。
 -> 现有的工艺对人体损害太大了
     厂长:两万八千三百五十七号，你知道整个污水处理厂有多少员工吗？
     -> 很多，所以改善工艺才重要

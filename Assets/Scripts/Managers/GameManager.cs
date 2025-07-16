@@ -124,7 +124,7 @@ public class GameManager : MonoBehaviour
         }
         // 检测Arduino按钮输入（仅在开始场景时）
         if (!isGameStarted && sceneManager != null &&
-            sceneManager.GetCurrentSceneName() == startSceneName &&
+            sceneManager.GetCurrentSceneName() == "Start_Scene" &&
             ArduinoController.Instance != null)
         {
             // 检测按钮按下

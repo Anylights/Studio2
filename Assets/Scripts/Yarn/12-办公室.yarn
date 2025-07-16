@@ -70,14 +70,17 @@ title:room
         <<set_button_mapping 1 1>>
         <<set_selection_delay 3>>
         男研究员: 您的表情为什么这么奇怪？
+        <<set_line_gradient "#FF001E" "#00FF1E" 2.5>>
             -> 你在撒谎
             -> 那个医生说她也参加了实验
         男研究员: 哎，我那个医生朋友说的啊，那她可能确实在我们这里。
         男研究员: 我们有过好几个实验者，毕竟五百万联邦币的报酬确实很诱人，不是每一个我都记得。
         男研究员: 她是您认识的人吗？
+        <<set_line_gradient "#FF001E" "#00FF1E" 2.5>>
             -> 她已经死了
             -> 我以前见过她
         男研究员: 原来是旧友啊。但是可惜，参与实验都是单独的，您可能得等实验结束才能见到她了。
+        <<set_line_gradient "#FF001E" "#00FF1E" 2.5>>
             -> 实验到底是什么？
             -> 她是谁？
         男研究员: ？原来不是您的旧友吗？
@@ -124,9 +127,12 @@ title:final_choice
 男研究员: 您是否愿意参与我们伟大的、足以改变人类命运的实验？
 <<wait  3>>
 // 参数：灯带0，完成后映射到选项0，每次推进10个灯珠，速度15，衰减速度2
-<<set_button_mapping -1 1>>
+<<set_button_mapping 0 1>>
 <<start_charging_effect 0 0 10 100 5>>
-    <<set_strip_pulse_effects "default" "default">>
+// 灯效充能设置
+// <<start_line_charging_effect step max duration colorHex optionIndex decaySpeed>>
+// 依次为：每次推进、最大值、光效时长、颜色、选项索引、衰减速度
+<<start_line_charging_effect 0.12 1 0.5 "#FF001E" 0 0.1>>
     -> 我拒绝
         <<set_strip_pulse_effects "default" "default">>
         <<play_timeline 1203>>

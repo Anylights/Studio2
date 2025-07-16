@@ -130,8 +130,139 @@ public class MinimalOptionsView : MonoBehaviour
         }
     }
 
+    // 脉冲渐变参数结构体
+    private struct PulseGradientParams
+    {
+        public Color? startColor;
+        public Color? endColor;
+        public float? duration;
+    }
+    private PulseGradientParams? nextPulseGradient = null;
+
+    // 充能参数类
+    private class ChargingEffectParams
+    {
+        public float step = 0.2f;
+        public float max = 1f;
+        public float duration = 0.5f;
+        public Color color = Color.red;
+        public float progress = 0f;
+        public bool charging = false;
+        public float decaySpeed = 0.1f; // 每秒衰减
+        public int optionIndex = 0; // 充能目标选项
+    }
+    private ChargingEffectParams chargingEffect = null;
+
+    // Yarn命令：设置下次脉冲渐变参数
+    [YarnCommand("set_line_gradient")]
+    public void SetLineGradient(string startColorHex, string endColorHex, float duration)
+    {
+        Color start, end;
+        if (!ColorUtility.TryParseHtmlString(startColorHex, out start)) start = Color.red;
+        if (!ColorUtility.TryParseHtmlString(endColorHex, out end)) end = Color.green;
+        nextPulseGradient = new PulseGradientParams { startColor = start, endColor = end, duration = duration };
+        if (enableDebugLog)
+            Debug.Log($"[LineEffect] 设置下次脉冲渐变: {startColorHex} -> {endColorHex}, 持续{duration}s");
+    }
+
+    // Yarn命令：设置充能光效参数
+    [YarnCommand("start_line_charging_effect")]
+    public void StartLineChargingEffect(float step, float max, float duration, string colorHex, int optionIndex = 0, float decaySpeed = 0.1f)
+    {
+        Color color;
+        if (!ColorUtility.TryParseHtmlString(colorHex, out color)) color = Color.red;
+        chargingEffect = new ChargingEffectParams
+        {
+            step = step,
+            max = max,
+            duration = duration,
+            color = color,
+            progress = 0f,
+            charging = true,
+            optionIndex = optionIndex,
+            decaySpeed = decaySpeed
+        };
+        Debug.Log($"[充能命令] StartLineChargingEffect 被调用: step={step}, max={max}, duration={duration}, color={colorHex}, optionIndex={optionIndex}, decaySpeed={decaySpeed}");
+        if (enableDebugLog)
+            Debug.Log($"[LineEffect] 启动充能光效: step={step}, max={max}, duration={duration}, color={colorHex}, option={optionIndex}, decay={decaySpeed}");
+    }
+
     private void Update()
     {
+        // 充能模式优先，绝不提前return
+        if (chargingEffect != null && chargingEffect.charging)
+        {
+            Debug.Log($"[充能推进] chargingEffect.charging={chargingEffect.charging}, progress={chargingEffect.progress}/{chargingEffect.max}");
+            int chargingRedOptionIndex = 0;
+            int chargingGreenOptionIndex = 1;
+            bool chargingLeftKeyPressed = Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.S) ||
+                                          Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.F);
+            bool chargingRightKeyPressed = Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.K) ||
+                                           Input.GetKeyDown(KeyCode.L) || Input.GetKeyDown(KeyCode.Semicolon);
+            // 充能时Bloom强度为常量
+            if (LinePathEffect.Instance != null && LinePathEffect.Instance.bloom != null)
+            {
+                LinePathEffect.Instance.bloom.intensity.value = LinePathEffect.Instance.bloomChargingIntensity;
+            }
+            bool trigger = false;
+            if (chargingEffect.optionIndex == chargingRedOptionIndex && chargingLeftKeyPressed) trigger = true;
+            if (chargingEffect.optionIndex == chargingRedOptionIndex && ArduinoController.Instance != null && ArduinoController.Instance.RedButtonDown) trigger = true;
+            if (chargingEffect.optionIndex == chargingGreenOptionIndex && chargingRightKeyPressed) trigger = true;
+            if (chargingEffect.optionIndex == chargingGreenOptionIndex && ArduinoController.Instance != null && ArduinoController.Instance.GreenButtonDown) trigger = true;
+            if (trigger)
+            {
+                // 推进充能
+                chargingEffect.progress += chargingEffect.step;
+                chargingEffect.progress = Mathf.Min(chargingEffect.progress, chargingEffect.max);
+                Debug.Log($"[充能推进] 按钮触发: 当前进度={chargingEffect.progress}/{chargingEffect.max}");
+                // 绘制充能线条
+                if (LinePathEffect.Instance != null && LinePathEffect.Instance.bloom != null)
+                {
+                    // 按进度线性插值Bloom强度，充能满时为最大
+                    // bloomIntensity = Mathf.Lerp(0f, LinePathEffect.Instance.bloomMaxIntensity, chargingEffect.progress / chargingEffect.max);
+                    // LinePathEffect.Instance.bloom.intensity.value = bloomIntensity;
+                }
+                LinePathEffect.Instance.DrawChargingLine(
+                    chargingEffect.progress / chargingEffect.max,
+                    chargingEffect.color,
+                    chargingEffect.color
+                );
+                Debug.Log($"[充能推进] DrawChargingLine: ratio={chargingEffect.progress / chargingEffect.max}, Bloom={LinePathEffect.Instance.bloom.intensity.value}");
+                // 充能满，自动选择
+                if (chargingEffect.progress >= chargingEffect.max)
+                {
+                    chargingEffect.charging = false;
+                    if (LinePathEffect.Instance != null && LinePathEffect.Instance.bloom != null)
+                    {
+                        LinePathEffect.Instance.bloom.intensity.value = LinePathEffect.Instance.bloomMaxIntensity;
+                    }
+                    Debug.Log($"[充能推进] 充能满，自动选择选项: {chargingEffect.optionIndex}");
+                    LinePathEffect.Instance.DrawLines(chargingEffect.duration, chargingEffect.color);
+                    SelectOption(chargingEffect.optionIndex);
+                }
+                return; // 只拦截充能按钮
+            }
+            // 衰减进度
+            if (chargingEffect.progress > 0f)
+            {
+                chargingEffect.progress -= chargingEffect.decaySpeed * Time.deltaTime;
+                chargingEffect.progress = Mathf.Max(0f, chargingEffect.progress);
+            }
+            // 绘制充能线条
+            if (LinePathEffect.Instance != null && LinePathEffect.Instance.bloom != null)
+            {
+                // 按进度线性插值Bloom强度，充能满时为最大
+                // bloomIntensity = Mathf.Lerp(0f, LinePathEffect.Instance.bloomMaxIntensity, chargingEffect.progress / chargingEffect.max);
+                // LinePathEffect.Instance.bloom.intensity.value = bloomIntensity;
+            }
+            LinePathEffect.Instance.DrawChargingLine(
+                chargingEffect.progress / chargingEffect.max,
+                chargingEffect.color,
+                chargingEffect.color
+            );
+            Debug.Log($"[充能推进] DrawChargingLine: ratio={chargingEffect.progress / chargingEffect.max}, Bloom={LinePathEffect.Instance.bloom.intensity.value}");
+            // 其他按钮（如右键）不return，继续走后面的普通分支
+        }
         // 在处理任何输入之前，检查是否在输入阻塞期
         if (Time.time < blockInputUntilTime)
         {
@@ -157,10 +288,63 @@ public class MinimalOptionsView : MonoBehaviour
         bool rightKeyPressed = Input.GetKeyDown(KeyCode.J) || Input.GetKeyDown(KeyCode.K) ||
                                Input.GetKeyDown(KeyCode.L) || Input.GetKeyDown(KeyCode.Semicolon);
 
+        // 充能光效逻辑（只拦截目标按钮，其他按钮正常）
+        if (chargingEffect != null && chargingEffect.charging)
+        {
+            // 只允许目标按钮推进充能
+            // float bloomIntensity = 0f; // This variable is no longer needed
+            bool trigger = false;
+            if (chargingEffect.optionIndex == redOptionIndex && leftKeyPressed) trigger = true;
+            if (chargingEffect.optionIndex == greenOptionIndex && rightKeyPressed) trigger = true;
+            if (ArduinoController.Instance != null)
+            {
+                if (chargingEffect.optionIndex == redOptionIndex && ArduinoController.Instance.RedButtonDown) trigger = true;
+                if (chargingEffect.optionIndex == greenOptionIndex && ArduinoController.Instance.GreenButtonDown) trigger = true;
+            }
+            if (trigger)
+            {
+                // 只推进进度，不允许直接SelectOption，也不播放普通光效
+                chargingEffect.progress += chargingEffect.step;
+                chargingEffect.progress = Mathf.Min(chargingEffect.progress, chargingEffect.max);
+                if (LinePathEffect.Instance != null && LinePathEffect.Instance.bloom != null)
+                {
+                    // 按进度线性插值Bloom强度，充能满时为最大
+                    // bloomIntensity = Mathf.Lerp(0f, LinePathEffect.Instance.bloomMaxIntensity, chargingEffect.progress / chargingEffect.max);
+                    // LinePathEffect.Instance.bloom.intensity.value = bloomIntensity;
+                }
+                LinePathEffect.Instance.DrawChargingLine(
+                    chargingEffect.progress / chargingEffect.max,
+                    chargingEffect.color,
+                    chargingEffect.color
+                );
+                if (enableDebugLog)
+                    Debug.Log($"[LineEffect] 充能推进: 当前进度={chargingEffect.progress}/{chargingEffect.max}");
+                if (chargingEffect.progress >= chargingEffect.max)
+                {
+                    chargingEffect.charging = false;
+                    LinePathEffect.Instance.DrawLines(chargingEffect.duration, chargingEffect.color);
+                    SelectOption(chargingEffect.optionIndex);
+                }
+                return; // 只要充能推进被处理，必须return，防止走到默认分支
+            }
+            // 非目标按钮，充能模式下不允许直接选择目标选项
+            // 其他按钮可正常选择其他选项
+            // 但此时不应播放普通光效
+        }
+
         // 键盘左键（ASDF）选择红色按钮映射的选项
         if (leftKeyPressed)
         {
-            LinePathEffect.Instance.DrawLines(0.5f, optionStrip1Color);
+            if (nextPulseGradient != null)
+            {
+                var p = nextPulseGradient.Value;
+                LinePathEffect.Instance.DrawLines(p.duration ?? 0.5f, p.startColor, p.endColor);
+                nextPulseGradient = null;
+            }
+            else
+            {
+                LinePathEffect.Instance.DrawLines(0.5f, optionStrip1Color);
+            }
             if (redOptionIndex >= 0 && redOptionIndex < currentOptions.Length)
             {
                 SelectOption(redOptionIndex);
@@ -170,7 +354,16 @@ public class MinimalOptionsView : MonoBehaviour
         // 键盘右键（JKL;）选择绿色按钮映射的选项
         if (rightKeyPressed)
         {
-            LinePathEffect.Instance.DrawLines(0.5f, optionStrip2Color);
+            if (nextPulseGradient != null)
+            {
+                var p = nextPulseGradient.Value;
+                LinePathEffect.Instance.DrawLines(p.duration ?? 0.5f, p.startColor, p.endColor);
+                nextPulseGradient = null;
+            }
+            else
+            {
+                LinePathEffect.Instance.DrawLines(0.5f, optionStrip2Color);
+            }
             if (greenOptionIndex >= 0 && greenOptionIndex < currentOptions.Length)
             {
                 SelectOption(greenOptionIndex);
@@ -181,32 +374,47 @@ public class MinimalOptionsView : MonoBehaviour
         // 检测 Arduino 按钮按下事件（原有逻辑保留）
         if (ArduinoController.Instance != null)
         {
-            // 按下红色按钮 - 选择映射的选项
             if (ArduinoController.Instance.RedButtonDown)
             {
-                // 先发送按钮按下事件（用于脉冲效果），0代表红按钮/0号灯带
                 EventCenter.Instance.TriggerEvent<int>("buttonPressed", 0);
-                LinePathEffect.Instance.DrawLines(0.5f, optionStrip1Color);
-
-                // 只有当映射不为-1且选项有效时才选择选项
+                if (nextPulseGradient != null)
+                {
+                    var p = nextPulseGradient.Value;
+                    LinePathEffect.Instance.DrawLines(p.duration ?? 0.5f, p.startColor, p.endColor);
+                    nextPulseGradient = null;
+                }
+                else
+                {
+                    LinePathEffect.Instance.DrawLines(0.5f, optionStrip1Color);
+                }
                 if (redOptionIndex >= 0 && redOptionIndex < currentOptions.Length)
                 {
                     SelectOption(redOptionIndex);
                 }
             }
-            // 按下绿色按钮 - 选择映射的选项
             else if (ArduinoController.Instance.GreenButtonDown)
             {
-                // 先发送按钮按下事件（用于脉冲效果），1代表绿按钮/1号灯带
                 EventCenter.Instance.TriggerEvent<int>("buttonPressed", 1);
-                LinePathEffect.Instance.DrawLines(0.5f, optionStrip2Color);
-
-                // 只有当映射不为-1且选项有效时才选择选项
+                if (nextPulseGradient != null)
+                {
+                    var p = nextPulseGradient.Value;
+                    LinePathEffect.Instance.DrawLines(p.duration ?? 0.5f, p.startColor, p.endColor);
+                    nextPulseGradient = null;
+                }
+                else
+                {
+                    LinePathEffect.Instance.DrawLines(0.5f, optionStrip2Color);
+                }
                 if (greenOptionIndex >= 0 && greenOptionIndex < currentOptions.Length)
                 {
                     SelectOption(greenOptionIndex);
                 }
             }
+        }
+        // 充能结束后（非充能状态），自动归零Bloom
+        if ((chargingEffect == null || !chargingEffect.charging) && LinePathEffect.Instance != null && LinePathEffect.Instance.bloom != null)
+        {
+            LinePathEffect.Instance.bloom.intensity.value = 0f;
         }
     }
 

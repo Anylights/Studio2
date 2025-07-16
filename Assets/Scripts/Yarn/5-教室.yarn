@@ -41,6 +41,7 @@ title: Stand_Up
                 <<set_strip_pulse_effects "gradient" "default">>
                 // 设置0号灯带渐变参数：从红色到绿色，持续2500毫秒
                 <<set_gradient_pulse_params 0 "#FF001E" "#00FF1E" 2500>>
+                <<set_line_gradient "#FF001E" "#00FF1E" 2.5>>
                 <<set_button_mapping 1 1>>
                 <<set_selection_delay 3>>
                     -> Z
@@ -275,12 +276,9 @@ title: After_Class
             <<play_sound "die_indoor" 1 false>>
             <<wait  2>>
             同学3: 我擦，什么动静？
-            <<set_button_mapping 1 1>>
-            <<set_option_colors "#00FF1E" "#00FF1E">>
-                ->继续留下偷听
+            <<declare $WillStay = false>>
+                ->继续留下偷听<<if $WillStay == true>>
                 ->出去看看
-            <<set_button_mapping 0 1>>
-            <<set_option_colors "#FF001E" "#00FF1E">>
             <<play_timeline 0505>>//男主跑出去
             <<stop_sound_fade "classroom" 2>>
             <<play_timeline 0504>> //熄灯

@@ -15,12 +15,14 @@ public class LinePathEffect : MonoBehaviour
     public float afterDrawWait = 1f; // 线绘制完成后等待消失的时间
     public Volume postProcessVolume; // 拖入或自动查找
     public float bloomMaxIntensity = 10f;
+    [Header("充能时的Bloom强度")]
+    public float bloomChargingIntensity = 3f; // 可在Inspector中调整
 
     private Vector3[] leftPath;
     private Vector3[] rightPath;
     private Coroutine drawCoroutine;
     private float timer = 0f;
-    private Bloom bloom;
+    [HideInInspector] public Bloom bloom;
 
     void Awake()
     {
@@ -119,6 +121,55 @@ public class LinePathEffect : MonoBehaviour
     public void DrawLines()
     {
         DrawLines(duration, null, null);
+    }
+
+    // 充能进度模式：只画到progress（0~1）对应的长度
+    public void DrawChargingLine(float progress, Color? startColor, Color? endColor)
+    {
+        DrawPartialLine(leftLine, leftPath, progress, startColor, endColor);
+        DrawPartialLine(rightLine, rightPath, progress, startColor, endColor);
+    }
+
+    private void DrawPartialLine(LineRenderer line, Vector3[] path, float progress, Color? startColor, Color? endColor)
+    {
+        int segmentCount = path.Length - 1;
+        float[] segmentLengths = new float[segmentCount];
+        float totalLength = 0f;
+        for (int i = 0; i < segmentCount; i++)
+        {
+            segmentLengths[i] = Vector3.Distance(path[i], path[i + 1]);
+            totalLength += segmentLengths[i];
+        }
+        float targetLength = Mathf.Clamp01(progress) * totalLength;
+        int currentSegment = 0;
+        float currentLength = 0f;
+        while (currentSegment < segmentCount && currentLength + segmentLengths[currentSegment] < targetLength)
+        {
+            currentLength += segmentLengths[currentSegment];
+            currentSegment++;
+        }
+        line.positionCount = currentSegment + 2;
+        for (int i = 0; i <= currentSegment; i++)
+        {
+            line.SetPosition(i, path[i]);
+        }
+        if (currentSegment < segmentCount)
+        {
+            float segProgress = (targetLength - currentLength) / segmentLengths[currentSegment];
+            Vector3 interp = Vector3.Lerp(path[currentSegment], path[currentSegment + 1], segProgress);
+            interp.z = path[0].z;
+            line.SetPosition(currentSegment + 1, interp);
+        }
+        else
+        {
+            line.SetPosition(currentSegment + 1, path[path.Length - 1]);
+        }
+        // 设置颜色
+        Color c = Color.Lerp(startColor ?? Color.white, endColor ?? Color.white, progress);
+        if (line.material.HasProperty("_EmissionColor"))
+            line.material.SetColor("_EmissionColor", c);
+        line.startColor = c;
+        line.endColor = c;
     }
 
     private IEnumerator DrawLinesRoutine(float customDuration, Color? startColor, Color? endColor)
