@@ -36,7 +36,13 @@ public class AudioManager : MonoBehaviour
             audioSourcesDic.Add(sounds[i].name, soundGameObject.GetComponent<AudioSource>());
         }
 
-        PlaySound("Start", 1, false);
+        StartCoroutine(PlayStartSoundWithDelay());
+    }
+
+    private IEnumerator PlayStartSoundWithDelay()
+    {
+        yield return new WaitForSeconds(7f);
+        PlaySound("Start", 1, true);
     }
 
     [YarnCommand("play_sound")]
