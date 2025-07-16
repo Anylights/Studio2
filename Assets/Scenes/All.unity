@@ -24087,7 +24087,7 @@ MonoBehaviour:
   lineZ: 0
   afterDrawWait: 0.5
   postProcessVolume: {fileID: 1000371519}
-  bloomMaxIntensity: 2
+  bloomMaxIntensity: 1
 --- !u!4 &811982589
 Transform:
   m_ObjectHideFlags: 0

@@ -126,9 +126,14 @@ title:data
 title:fake_End
 ---
 <<wait 3>>
-要跳的人: <color=red>这样无法改变结局。</color>
-要跳的人: <color=red>记住。</color>
+要跳的人: <color=red>...</color>
+要跳的人: <color=red>我和你说过。</color>
 要跳的人: <color=red><shake>千<waitfor=0.2>万<waitfor=0.2>不要<waitfor=0.2>选择<waitfor=0.2>顺从。</shake></color>
+要跳的人: <color=red>你还是做了错误的选择。</color>
+要跳的人: <color=red>为什么呢？</color>
+要跳的人: 你或许觉得你拥有选择的权力，
+要跳的人: <color=red>但这样选，什么也无法改变。</color>
+要跳的人: <color=red>重新做一次选择吧，我知道你有这样的能力。</color>
 <<wait 3>>
 <<quit_game>>
 ===
